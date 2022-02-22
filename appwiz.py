@@ -6,9 +6,7 @@ from stools import make_fields, colbox
 st.set_page_config(layout="wide")
 st.title('Data description wizard')
 
-dtypes = 'float64 int64 datetime64[ns] object'.split()
-
-# Choose a dataset
+# Define datasets and choose one
 ccols = st.columns((1, 5))
 selcols = None
 with ccols[0]:  # dataset chooser dropdown
@@ -31,7 +29,7 @@ st.write(f'Getting ingestion {ingestion} from {dataurl}')
 
 # Load the dataset
 parquet_file, pt, rsize, pqsize, msize = load_data(dataurl, selcols)
-nrows, ncols = pt.num_columns, pt.num_rows
+ncols, nrows = pt.num_columns, pt.num_rows
 st.write(f'{nrows:,} rows _ {ncols} columns ___ On disk _ {rsize:.1f} MB (raw) _ {pqsize:.1f} MB (parquet) ___ In memory {msize:.1f} MB (arrow)')
 
 # Show a dataframe of the first n rows
@@ -46,8 +44,8 @@ make_fields(row_data['fields'], pt, parquet_file)
 
 # Make table constraints and transforms section
 
-#st.write(st.session_state)
 st.markdown('---')
+# Validate and show schema
 colbox('Schema', 'Black', 'Green')
 scj = generate_schema(parquet_file)
 if scj is not None:

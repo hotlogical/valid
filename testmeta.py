@@ -2,6 +2,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from dtools import setcolmetadata, readcolmetadata
 
+# Tests for reading / writing metadata
 fnam2 = 'data/yellow_tripdata_test2.parquet'
 pt = pq.read_table(fnam2)
 print(pt.schema, '\n')

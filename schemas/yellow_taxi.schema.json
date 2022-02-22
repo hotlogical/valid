@@ -1,5 +1,6 @@
 {
   "model": {
+    "tabledata": null,
     "fields": [
       {
         "names": {
@@ -208,7 +209,7 @@
         "names": {
           "rawname": "payment_type",
           "displayname": "Payment Type",
-          "descriptionshort": "Payment type code",
+          "descriptionshort": "Payment type code hello",
           "descriptionlong": "A numeric code signifying how the passenger paid for the trip.\n1= Credit card\n2= Cash\n3= No charge\n4= Dispute\n5= Unknown\n6= Voided trip"
         },
         "types": {

@@ -2,6 +2,7 @@ from datetime import datetime
 from faker import Faker
 import pandas as pd
 
+# Make fake names
 a = datetime.now()
 
 #fake = Faker(use_weighting=False)
