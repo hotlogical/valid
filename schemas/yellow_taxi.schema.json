@@ -1,0 +1,267 @@
+{
+  "model": {
+    "fields": [
+      {
+        "names": {
+          "rawname": "tpep_pickup_datetime",
+          "displayname": "Pickup Date/Time",
+          "descriptionshort": "Date and time of pickup",
+          "descriptionlong": "The date and time when the meter was engaged. "
+        },
+        "types": {
+          "ftype": "int64",
+          "logicaltype": "timestamp",
+          "arrowtype": "timestamp[ms]",
+          "representation": "int64",
+          "units": ""
+        },
+        "flags": {
+          "isRaw": true,
+          "isPII": false,
+          "isUnique": false,
+          "isStandardised": false,
+          "isTransformed": false,
+          "inInherited": false,
+          "isJoin": false,
+          "isKey": false,
+          "isSynthetic": false,
+          "isBackfilled": false,
+          "isCategorical": false
+        },
+        "constraints": null
+      },
+      {
+        "names": {
+          "rawname": "tpep_dropoff_datetime",
+          "displayname": "Dropoff Date/Time",
+          "descriptionshort": "Dropoff date and time",
+          "descriptionlong": "The date and time when the meter was disengaged. "
+        },
+        "types": {
+          "ftype": "int64",
+          "logicaltype": "timestamp",
+          "arrowtype": "timestamp[ms]",
+          "representation": "int64",
+          "units": ""
+        },
+        "flags": {
+          "isRaw": false,
+          "isPII": false,
+          "isUnique": false,
+          "isStandardised": false,
+          "isTransformed": false,
+          "inInherited": false,
+          "isJoin": false,
+          "isKey": false,
+          "isSynthetic": false,
+          "isBackfilled": false,
+          "isCategorical": false
+        },
+        "constraints": null
+      },
+      {
+        "names": {
+          "rawname": "passenger_count",
+          "displayname": "Passenger count",
+          "descriptionshort": "Number of passengers",
+          "descriptionlong": "NoneThe number of passengers in the vehicle. This is a driver-entered value."
+        },
+        "types": {
+          "ftype": "int64",
+          "logicaltype": "",
+          "arrowtype": "int64",
+          "representation": "int64",
+          "units": ""
+        },
+        "flags": {
+          "isRaw": true,
+          "isPII": false,
+          "isUnique": false,
+          "isStandardised": false,
+          "isTransformed": false,
+          "inInherited": false,
+          "isJoin": false,
+          "isKey": false,
+          "isSynthetic": false,
+          "isBackfilled": false,
+          "isCategorical": true
+        },
+        "constraints": null
+      },
+      {
+        "names": {
+          "rawname": "trip_distance",
+          "displayname": "Trip Distance",
+          "descriptionshort": "Trip distance in miles",
+          "descriptionlong": "The elapsed trip distance in miles reported by the taximeter."
+        },
+        "types": {
+          "ftype": "double",
+          "logicaltype": "none",
+          "arrowtype": "double",
+          "representation": "double",
+          "units": "miles"
+        },
+        "flags": {
+          "isRaw": true,
+          "isPII": false,
+          "isUnique": false,
+          "isStandardised": false,
+          "isTransformed": false,
+          "inInherited": false,
+          "isJoin": false,
+          "isKey": false,
+          "isSynthetic": false,
+          "isBackfilled": false,
+          "isCategorical": false
+        },
+        "constraints": null
+      },
+      {
+        "names": {
+          "rawname": "store_and_forward _flag",
+          "displayname": "Store / Forward flag",
+          "descriptionshort": "Sore and forward flag.",
+          "descriptionlong": "This flag indicates whether the trip record was held in vehicle\nmemory before sending to the vendor, aka \u201cstore and forward,\u201d\nbecause the vehicle did not have a connection to the server.\nY= store and forward trip\nN= not a store and forward trip"
+        },
+        "types": {
+          "ftype": "byte_array",
+          "logicaltype": "string",
+          "arrowtype": "string",
+          "representation": "byte_array",
+          "units": "None"
+        },
+        "flags": {
+          "isRaw": true,
+          "isPII": false,
+          "isUnique": false,
+          "isStandardised": false,
+          "isTransformed": false,
+          "inInherited": false,
+          "isJoin": false,
+          "isKey": false,
+          "isSynthetic": false,
+          "isBackfilled": false,
+          "isCategorical": true
+        },
+        "constraints": null
+      },
+      {
+        "names": {
+          "rawname": "PULocationID",
+          "displayname": "Pick Location ID",
+          "descriptionshort": "Pick taxi zone",
+          "descriptionlong": "NoneTLC Taxi Zone in which the taximeter was engaged"
+        },
+        "types": {
+          "ftype": "int64",
+          "logicaltype": "",
+          "arrowtype": "int64",
+          "representation": "int64",
+          "units": ""
+        },
+        "flags": {
+          "isRaw": true,
+          "isPII": false,
+          "isUnique": false,
+          "isStandardised": false,
+          "isTransformed": false,
+          "inInherited": false,
+          "isJoin": false,
+          "isKey": false,
+          "isSynthetic": false,
+          "isBackfilled": false,
+          "isCategorical": true
+        },
+        "constraints": null
+      },
+      {
+        "names": {
+          "rawname": "DOLocationID",
+          "displayname": "Dropoff Location ID",
+          "descriptionshort": "Taxi zone of dropoff.",
+          "descriptionlong": "TLC Taxi Zone in which the taximeter was disengaged"
+        },
+        "types": {
+          "ftype": "int64",
+          "logicaltype": "",
+          "arrowtype": "int64",
+          "representation": "int64",
+          "units": ""
+        },
+        "flags": {
+          "isRaw": true,
+          "isPII": false,
+          "isUnique": false,
+          "isStandardised": false,
+          "isTransformed": false,
+          "inInherited": false,
+          "isJoin": false,
+          "isKey": false,
+          "isSynthetic": false,
+          "isBackfilled": false,
+          "isCategorical": true
+        },
+        "constraints": null
+      },
+      {
+        "names": {
+          "rawname": "payment_type",
+          "displayname": "Payment Type",
+          "descriptionshort": "Payment type code",
+          "descriptionlong": "A numeric code signifying how the passenger paid for the trip.\n1= Credit card\n2= Cash\n3= No charge\n4= Dispute\n5= Unknown\n6= Voided trip"
+        },
+        "types": {
+          "ftype": "int64",
+          "logicaltype": "",
+          "arrowtype": "int64",
+          "representation": "int64",
+          "units": ""
+        },
+        "flags": {
+          "isRaw": true,
+          "isPII": false,
+          "isUnique": false,
+          "isStandardised": false,
+          "isTransformed": false,
+          "inInherited": false,
+          "isJoin": false,
+          "isKey": false,
+          "isSynthetic": false,
+          "isBackfilled": false,
+          "isCategorical": true
+        },
+        "constraints": null
+      },
+      {
+        "names": {
+          "rawname": "fare_amount",
+          "displayname": "Fare Amount",
+          "descriptionshort": "Time and distance fare",
+          "descriptionlong": "The time-and-distance fare calculated by the meter."
+        },
+        "types": {
+          "ftype": "double",
+          "logicaltype": "",
+          "arrowtype": "double",
+          "representation": "double",
+          "units": ""
+        },
+        "flags": {
+          "isRaw": true,
+          "isPII": false,
+          "isUnique": false,
+          "isStandardised": false,
+          "isTransformed": false,
+          "inInherited": false,
+          "isJoin": false,
+          "isKey": false,
+          "isSynthetic": false,
+          "isBackfilled": false,
+          "isCategorical": false
+        },
+        "constraints": null
+      }
+    ]
+  }
+}

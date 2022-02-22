@@ -1,0 +1,268 @@
+{
+  "title": "CaspianSchema",
+  "description": "This is the Caspian meta-schema",
+  "type": "object",
+  "properties": {
+    "model": {
+      "title": "Model",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Tabular"
+        },
+        {
+          "$ref": "#/definitions/Relational"
+        },
+        {
+          "$ref": "#/definitions/Graph"
+        },
+        {
+          "$ref": "#/definitions/Nested"
+        }
+      ]
+    }
+  },
+  "required": [
+    "model"
+  ],
+  "definitions": {
+    "FieldNames": {
+      "title": "FieldNames",
+      "type": "object",
+      "properties": {
+        "rawname": {
+          "title": "Rawname",
+          "type": "string"
+        },
+        "displayname": {
+          "title": "Displayname",
+          "type": "string"
+        },
+        "descriptionshort": {
+          "title": "Descriptionshort",
+          "type": "string"
+        },
+        "descriptionlong": {
+          "title": "Descriptionlong",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rawname"
+      ]
+    },
+    "FieldTypes": {
+      "title": "FieldTypes",
+      "type": "object",
+      "properties": {
+        "ftype": {
+          "title": "Ftype",
+          "type": "string"
+        },
+        "logicaltype": {
+          "title": "Logicaltype",
+          "type": "string"
+        },
+        "arrowtype": {
+          "title": "Arrowtype",
+          "type": "string"
+        },
+        "representation": {
+          "title": "Representation",
+          "type": "string"
+        },
+        "units": {
+          "title": "Units",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ftype"
+      ]
+    },
+    "FieldFlags": {
+      "title": "FieldFlags",
+      "type": "object",
+      "properties": {
+        "isRaw": {
+          "title": "Israw",
+          "type": "boolean"
+        },
+        "isPII": {
+          "title": "Ispii",
+          "type": "boolean"
+        },
+        "isUnique": {
+          "title": "Isunique",
+          "type": "boolean"
+        },
+        "isStandardised": {
+          "title": "Isstandardised",
+          "type": "boolean"
+        },
+        "isTransformed": {
+          "title": "Istransformed",
+          "type": "boolean"
+        },
+        "inInherited": {
+          "title": "Ininherited",
+          "type": "boolean"
+        },
+        "isJoin": {
+          "title": "Isjoin",
+          "type": "boolean"
+        },
+        "isKey": {
+          "title": "Iskey",
+          "type": "boolean"
+        },
+        "isSynthetic": {
+          "title": "Issynthetic",
+          "type": "boolean"
+        },
+        "isBackfilled": {
+          "title": "Isbackfilled",
+          "type": "boolean"
+        },
+        "isCategorical": {
+          "title": "Iscategorical",
+          "type": "boolean"
+        }
+      }
+    },
+    "FieldConstraints": {
+      "title": "FieldConstraints",
+      "type": "object",
+      "properties": {
+        "equal": {
+          "title": "Equal",
+          "type": "integer"
+        },
+        "notEqual": {
+          "title": "Notequal",
+          "type": "integer"
+        },
+        "greater": {
+          "title": "Greater",
+          "type": "integer"
+        },
+        "greaterEqual": {
+          "title": "Greaterequal",
+          "type": "integer"
+        },
+        "less": {
+          "title": "Less",
+          "type": "integer"
+        },
+        "lessEqual": {
+          "title": "Lessequal",
+          "type": "integer"
+        },
+        "multipleOf": {
+          "title": "Multipleof",
+          "type": "integer"
+        },
+        "monotonicAsc": {
+          "title": "Monotonicasc",
+          "type": "integer"
+        },
+        "monotonicDesc": {
+          "title": "Monotonicdesc",
+          "type": "integer"
+        },
+        "matches": {
+          "title": "Matches",
+          "type": "string"
+        }
+      },
+      "required": [
+        "equal",
+        "notEqual",
+        "greater",
+        "greaterEqual",
+        "less",
+        "lessEqual",
+        "multipleOf",
+        "monotonicAsc",
+        "monotonicDesc",
+        "matches"
+      ]
+    },
+    "DataField": {
+      "title": "DataField",
+      "type": "object",
+      "properties": {
+        "names": {
+          "$ref": "#/definitions/FieldNames"
+        },
+        "types": {
+          "$ref": "#/definitions/FieldTypes"
+        },
+        "flags": {
+          "$ref": "#/definitions/FieldFlags"
+        },
+        "constraints": {
+          "$ref": "#/definitions/FieldConstraints"
+        }
+      },
+      "required": [
+        "names",
+        "types"
+      ]
+    },
+    "Tabular": {
+      "title": "Tabular",
+      "type": "object",
+      "properties": {
+        "fields": {
+          "title": "Fields",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataField"
+          }
+        }
+      },
+      "required": [
+        "fields"
+      ]
+    },
+    "Relational": {
+      "title": "Relational",
+      "type": "object",
+      "properties": {
+        "relational": {
+          "title": "Relational",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Tabular"
+          }
+        }
+      },
+      "required": [
+        "relational"
+      ]
+    },
+    "Graph": {
+      "title": "Graph",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "Nested": {
+      "title": "Nested",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      }
+    }
+  }
+}
