@@ -52,3 +52,6 @@ if scj is not None:
     st.write(scj.dict())
     with open(f'schemas/{dataset}.schema.json', 'w') as f:
         f.write(scj.json(indent=2))
+
+#df = pt.to_pandas()
+#st.write(df.describe())
