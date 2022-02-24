@@ -1,5 +1,8 @@
 # (c) 2009 - 2022 E. Cawley. All Rights Reserved.
 
+# Abandon all hope ye who enter here
+# This needs a total re-write - absolutely no warranty on any of this
+
 import gc
 import os
 # from DataHelper import DataHelper
