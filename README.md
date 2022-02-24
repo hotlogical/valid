@@ -19,7 +19,7 @@ Part of the mini-POC. Scope...
 - Store dataset schema.
 
 
-
+[Installation](#installation)
 ## Installation
 
 Miniconda is the preferred python version, download from
