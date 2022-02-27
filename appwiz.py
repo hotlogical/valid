@@ -1,6 +1,6 @@
 import streamlit as st
 from dtools import load_data, get_row_data, generate_schema
-from stools import make_fields, colbox
+from stools import make_fields, colbox, make_table
 
 # Must be first command executed
 st.set_page_config(layout="wide")
@@ -40,9 +40,10 @@ st.dataframe(df, height=200)
 row_data = get_row_data(parquet_file, selcols)
 
 # Make the stats and schema sections for each field
-make_fields(row_data['fields'], pt, parquet_file)
+pr = make_fields(row_data['fields'], pt, parquet_file)
 
 # Make table constraints and transforms section
+make_table(pr, row_data['fields'], pt)
 
 st.markdown('---')
 # Validate and show schema

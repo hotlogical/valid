@@ -13,7 +13,7 @@ from IPython.display import display_pretty, display_png, display_svg, Image, SVG
 
 from ROOT import TGraph, TGraphErrors, TMultiGraph, TCanvas, TLine, TH1D, TH2D, TF1, TProfile, TDatime, TLegend, TText
 from ROOT import gStyle, gROOT, gSystem, gPad, gDirectory, SetOwnership, TColor, TPad, TFile, TDirectory, TMarker, TBox
-from ROOT import TPave, TPaveText, THttpServer, nullptr, TImage
+from ROOT import TPave, TPaveText, THttpServer, nullptr, TImage, TBufferJSON
 from ROOT import kWhite, kGray, kBlack, kYellow, kOrange, kRed, kPink, kMagenta, kViolet, kBlue, kAzure, kCyan, kTeal, \
     kGreen, kSpring
 from ROOT import kDot, kBlue, kStar, kCircle, kMultiply, kFullDotSmall, kFullDotLarge, kFullCircle
@@ -119,9 +119,13 @@ class ECanvas:
             f = TFile().Open('graph.root', "RECREATE")
             self.c.Write()
             f.Close()
+            # js = TBufferJSON.ExportToFile('graph.json', self.c)  # .Data()
+            js = TBufferJSON.ConvertToJSON(self.c, 23).Data()  # .replace('\n', '')
+            #with open('graph.json', 'w') as fh:
+            #    fh.write(js)
             # p = Image('graph.png')
             # display(p)
-            return a
+            return js
 
     # def __del__(self):
     #    print ('self.c ', self.c)
@@ -248,9 +252,9 @@ class pROOT:
         st.SetLabelColor(0, "xyz")
         st.SetLegendFillColor(1)
         st.SetPadColor(1)
-        st.SetStatColor(3)
+        st.SetStatColor(1)
         st.SetStatTextColor(3)
-        st.SetTitleColor(3)
+        st.SetTitleColor(3, "xyz")
         st.SetTitleFillColor(4)
         st.SetTitleTextColor(0)
 
@@ -986,6 +990,10 @@ class pROOT:
             c.Update()
             if self.isinline() or out:
                 img = self.show(out)
+                # js = TBufferJSON.ExportToFile('hist.json', h)  # .Data()
+                # with open('hist.json', 'w') as fh:
+                #     fh.write(js)
+                # img = js
         self.things.append(h)
         if fitpointer is not None:
             self.things.append(fitpointer)
@@ -1005,9 +1013,11 @@ class pROOT:
         if p is not None:
             self.st.SetPalette(p)
 
-        commonIdx = x1.dropna().index.intersection(y1.dropna().index)
-        x = x1.reindex(commonIdx).values
-        y = y1.reindex(commonIdx).values
+        # commonIdx = x1.dropna().index.intersection(y1.dropna().index)
+        # x = x1.reindex(commonIdx).values
+        # y = y1.reindex(commonIdx).values
+        x = x1
+        y = y1
 
         # xt = (x.max() - x.min) * 0.05
         # yt = (y.max() - y.min) * 0.05
@@ -1015,23 +1025,28 @@ class pROOT:
         h = TH2D(t, t, nbinsx, xlow, xhigh, nbinsy, ylow, yhigh)
 
         if wgts is None:
-            [h.Fill(x[i], y[i]) for i in range(len(x))]
+            h.FillN(len(x), x, y, nullptr)
+            # [h.Fill(x[i], y[i]) for i in range(len(x))]
         else:
             h.Sumw2()
-            [h.Fill(x[i], y[i], wgts[i]) for i in range(len(x))]
+            h.FillN(len(x), x, y, wgts)
+            # [h.Fill(x[i], y[i], wgts[i]) for i in range(len(x))]
 
         self.setLineCol(h, l)
         if fi is not None:
             h.SetFillColor(fi)
         h.Draw(o)
+        img = None
         if d:
             c.Modified()
             c.Update()
             if self.isinline() or out:
-                self.show(out)
+                img = self.show(out)
         self.things.append(h)
         gc.collect()
         # self.st.SetPalette(self.defaultPalette)
+        if img is not None:
+            return h, img
         return h
 
     def rp(self, x1, y1, nbinsx=40, nbinsy=40, xlow=None, xhigh=None, ylow=None, yhigh=None,

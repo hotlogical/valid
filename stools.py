@@ -5,6 +5,7 @@ import pyarrow.compute as pc
 import generate_metaschema as gm
 import proot
 from dtools import setcolmetadata, readcolmetadata
+import streamlit.components.v1 as components
 
 
 dtypes = 'float double int32 int64 int96 byte_array timestamp'.split()
@@ -15,6 +16,14 @@ def colbox(text, back, fore=None):
     if fore is None:
         fore = back
     st.markdown(f'<p style="background-color:{back};color:{fore};width:30px"><b>{text}</b></p>', unsafe_allow_html=True)
+
+def rgraph(js):
+    components.html(f'''
+        <div id="drawing" ></div>
+        <script type="text/javascript" src="https://root.cern/js/latest/scripts/JSRoot.core.js"></script>
+        <script type='text/javascript'>
+            JSROOT.draw("drawing", JSROOT.parse({js}));
+        </script>''', width=800, height=800)
 
 def make_data_header(cols):
     # Header row for the data fields table
@@ -46,8 +55,9 @@ def make_numeric_stats(i, field_data, fa, pr):
         st.write(df)
     with cols[2]:  # Table of outliers
         mn, mx = st.slider('', min, max, (min, max), 1.)
-        h = pr.rh(na, int(bins), mn, mx, t=f'{field};km', l='b', fi=proot.kBlue-7, out='st', o='')
-        st.image('graph.png')  #, caption='Shit Biscuits')
+        h, json = pr.rh(na, int(bins), mn, mx, t=f'{field};km', l='b', fi=proot.kBlue-7, out='st', o='')
+        # st.image('graph.png')  #, caption='Shit Biscuits')
+        rgraph(json)
 
 def make_category_stats(i, field_data, vc, pr):
     # Graph and stats for categorical data
@@ -61,8 +71,9 @@ def make_category_stats(i, field_data, vc, pr):
     dc['%'].round(1)
     cols = st.columns((5, 2))
     with cols[0]:  # Distribution graph
-        h = pr.rh(dc, len(dc), 0., float(len(dc)), t=f'{field} (%)', l='W', fi=proot.kBlue-7, out='st', o='HIST', n=100)
-        st.image('graph.png')
+        h, js = pr.rh(dc, len(dc), 0., float(len(dc)), t=f'{field} (%)', l='W', fi=proot.kBlue-7, out='st', o='hist', n=100)
+        #st.image('graph.png')
+        rgraph(js)
     with cols[1]:  # Table of value counts
         st.markdown(hide_dataframe_row_index, unsafe_allow_html=True)
         st.write('value counts')
@@ -88,8 +99,10 @@ def make_time_stats(i, field_data, fa, pr):
         min = pd.Timestamp(mn).value / 1000000000.0
         max = pd.Timestamp(mx).value / 1000000000.0
         ti = 1 if (mx - mn).days < 4 else 2
-        h = pr.rh(df, int(bins), min, max, t=f'{field};date', l='b', fi=proot.kBlue-7, out='st', o='', ti=ti)
-        st.image('graph.png')
+        #pr.st.SetOptStat('n')
+        h, js = pr.rh(df, int(bins), min, max, t=f'{field};date', l='b', fi=proot.kBlue-7, out='st', o='bar1', ti=ti)
+        rgraph(js)
+        # st.image('graph.png')
 
 def make_field_stats(i, field_data, pt, pr):
     # Make different stats depending on field type
@@ -120,7 +133,7 @@ def make_names_section(i, field_data, pt, pr, section, fdict, parquet_file):
         colbox(section, 'Black', 'Green')
         for f in fields:
             oldval = oldvalues[f] if f in oldvalues else ''
-            if oldval is not '' and type(oldval) == str and len(oldval) > 40:
+            if oldval != '' and type(oldval) == str and len(oldval) > 40:
                 response[f] = st.text_area(f, oldval, 150, None, f)
             else:
                 if section in 'flags constraints'.split():
@@ -185,7 +198,7 @@ def make_fields(field_data, pt, parquet_file):
     # Main loop to generate each field
     # Setup ROOT
     pr = proot.pROOT(True, True)
-    c2 = pr.createCanvas('c2', inline=True, width=800, height=800)
+    c2 = pr.createCanvas('c2', inline=True, width=800, height=1600)
 
     # Format the headers for the field sections
     cols = 'field 0.8 status 0.2 dtype 0.4 logical 0.4 nulls 0.4 min 0.7 max 1.0'.split()
@@ -196,3 +209,10 @@ def make_fields(field_data, pt, parquet_file):
     for i, fd in enumerate(field_data):
         make_field_row(i, field_data[fd], cols, pt, pr, parquet_file)
 
+    return pr
+
+def make_table(pr, field_data, pt):
+    ps = pt  # .slice(0, 1000)
+    h, js = pr.rh2(pt.column(3).to_numpy(), pt.column(8).to_numpy(), 30, 30, 0., 3., 0., 13., out='st', t=';trip_distance;fare_amount', o='cont1')
+    #st.image('graph.png')  #, caption='Shit Biscuits')
+    rgraph(js)
