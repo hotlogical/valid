@@ -2,15 +2,31 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import pyarrow.compute as pc
+import jsonschema
 import generate_metaschema as gm
 import proot
-from dtools import setcolmetadata, readcolmetadata
+from dtools import setcolmetadata, readcolmetadata, readcolmetadata2
 import streamlit.components.v1 as components
 
 
 dtypes = 'float double int32 int64 int96 byte_array timestamp'.split()
 hide_table_row_index = "<style>tbody th {display:none}.blank {display:none}</style>"
 hide_dataframe_row_index = "<style>.row_heading.level0 {display:none}.blank {display:none}</style>"
+
+def dtypcol(cval):
+    cmap = {'int': 'background-color:#002200',
+            'float': 'background-color:#000044',
+            'Timestamp': 'background-color:#330000'}
+    dtyp = type(cval).__name__
+    # print(dtyp)
+    if dtyp in cmap:
+        return cmap[dtyp]
+    return ''
+
+def vspace(n):
+    for i in range(n):
+        st.write('')
+
 
 def colbox(text, back, fore=None):
     if fore is None:
@@ -145,16 +161,77 @@ def make_names_section(i, field_data, pt, pr, section, fdict, parquet_file):
             st.write('Writing schema changes to ', parquet_file)
             pt = setcolmetadata(pt, i, section, response, parquet_file)
 
-def make_schema_form(i, field_data, pt, pr, parquet_file):
+def make_names_types_flags_form(i, field_data, pt, pr, parquet_file):
     field = field_data['field_name']
     fdict = gm.field_dict()
     sections = fdict.keys()
     # section = st.radio('', fdict.keys())
-    sections = 'names types flags constraints'.split()
-    cols = st.columns((2., 2., 2., 2.))
+    sections = 'names types flags'.split()
+    cols = st.columns((2., 2., 2.))
     for k, section in enumerate(sections):
         with cols[k]:
             make_names_section(i, field_data, pt, pr, section, fdict, parquet_file)
+
+
+
+def make_constraints_form(n, field_data, pt, pr, parquet_file):
+    field = field_data['field_name']
+    clist = 'greater_equal less_equal'.split()
+    cols = 'constraint 2 warning 2 error 2 enabled 1 delete 1 . 1'.split()
+    cols = {cols[i]: float(cols[i + 1]) for i in range(0, len(cols), 2)}
+    inps = [st.selectbox, st.text_input, st.text_input, st.checkbox, st.checkbox]
+    oldvalues = readcolmetadata2(parquet_file, n, 'constraints')
+    cons = [] if oldvalues == {} else oldvalues
+    # st.write(cons)
+
+    colbox('Constraints', 'Black', 'Green')
+    addconstraint = st.button("Add Constraint")
+    if addconstraint:
+        cons.append({'name': 'greater_equal', 'values': {'warning': '', 'error': ''}, 'enabled': False})
+
+    newcons = []
+    numdel = 0
+    with st.form(f"form_constraints_{field}", clear_on_submit=False):
+        #columns = st.columns(cols.values())
+        if len(cons) == 0:
+            colbox('No_constraints', 'Black', 'Yellow')
+        else:  # Draw headers
+            columns = st.columns(cols.values())
+            for i, col in enumerate(cols.keys()):
+                with columns[i]:
+                    st.text(col)
+        for i, c in enumerate(cons):
+            if f'cons_{i}_4' in st.session_state:  # ugh, Don't display deleted constraint
+                # st.write(f'cons_{i}_4', st.session_state[f'cons_{i}_4'])
+                if st.session_state[f'cons_{i}_4']:
+                    continue
+            columns = st.columns(cols.values())
+            thiscons = {}
+            with columns[0]:
+                consind = clist.index(cons[i]['name'])
+                thiscons['name'] = st.selectbox('', clist, consind, key=f'cons_{i}_0')  # , clist.index(cons[i]['values']))
+            thiscons['values'] = {}
+            with columns[1]:
+                thiscons['values']['warning'] = st.text_input('', cons[i]['values']['warning'], key=f'cons_{i}_1')
+            with columns[2]:
+                thiscons['values']['error'] = st.text_input('', cons[i]['values']['error'], key=f'cons_{i}_2')
+            with columns[3]:
+                vspace(3)
+                thiscons['enabled'] = st.checkbox('', cons[i]['enabled'], f'cons_{i}_3')
+            with columns[4]:
+                vspace(3)
+                delete = st.checkbox('', False, f'cons_{i}_4')
+            if not delete:
+                newcons.append(thiscons)
+            else:
+                numdel += 1
+        # st.write('numdel ', numdel)
+        # st.write('newcons ', newcons)
+        submitted = st.form_submit_button("Save")
+        if addconstraint or submitted:
+            pt = setcolmetadata(pt, n, 'constraints', newcons, parquet_file)
+            st.write('Writing schema changes to ', parquet_file)
+
 
 def make_field_content(i, field_data, pt, pr, parquet_file):
     st.write('<style>div.row-widget.stRadio > div{flex-direction:row;} </style>',
@@ -166,18 +243,34 @@ def make_field_content(i, field_data, pt, pr, parquet_file):
         df = pt.column(i).to_pandas().describe()
         st.write(df)
     if tab == 'Names Types Flags  .':  # Form to enter schema details
-        make_schema_form(i, field_data, pt, pr, parquet_file)
+        make_names_types_flags_form(i, field_data, pt, pr, parquet_file)
+    if tab == 'Constraints Transforms Standardizations':  # Form to enter constraint details
+        make_constraints_form(i, field_data, pt, pr, parquet_file)
     st.markdown('---')
+
+def reset_checks(fkey, field_data):
+    # If we open a new field detail - close any open fields
+    for f in field_data:
+        field = field_data[f]['field_name']
+        st.write(field)
+        thisfkey = f'render_{field}'
+        if thisfkey in st.session_state:
+            if thisfkey != fkey:
+                st.write(f'collapsing {thisfkey}')
+                st.session_state[thisfkey] = False
 
 def make_field_row(r, field_data, cols, pt, pr, parquet_file):
     # First the row containing the parquet metadata
+    allfielddata = field_data
+    field_data = field_data[list(field_data.keys())[r]]
     field = field_data['field_name']
     with st.container():
         columns = st.columns(cols.values())
         for i, col in enumerate(cols.keys()):
             with columns[i]:
                 if col == 'field':
-                    showfield = st.checkbox(field)
+                    fkey = f'render_{field}'
+                    showfield = st.checkbox(field, key=fkey, on_change=reset_checks, args=(fkey, allfielddata))
                 elif col == 'status':
                     status = '#fb8b1e' if f'saved_{field}' in st.session_state else 'Green'
                     colbox('a', status)
@@ -207,8 +300,7 @@ def make_fields(field_data, pt, parquet_file):
     # Make the individual data field sections
     make_data_header(cols)
     for i, fd in enumerate(field_data):
-        make_field_row(i, field_data[fd], cols, pt, pr, parquet_file)
-
+        make_field_row(i, field_data, cols, pt, pr, parquet_file)
     return pr
 
 def make_table(pr, field_data, pt):

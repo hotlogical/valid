@@ -1,0 +1,5 @@
+f1 = pa.array([1,2,3,4,5])
+f2 = pa.array([6,7,8,9,10])
+f3 = pa.array([11,12,13,14,15])
+tab = pa.table([f1, f2, f3], names=["f1", "f2", "f3"])
+pq.write_table(tab, 'data/tabtest.parquet')

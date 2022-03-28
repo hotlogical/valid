@@ -27,9 +27,19 @@
           "isKey": false,
           "isSynthetic": false,
           "isBackfilled": false,
-          "isCategorical": false
+          "isCategorical": false,
+          "isNumeric": null
         },
-        "constraints": null
+        "constraints": [
+          {
+            "name": "greater_equal",
+            "values": {
+              "warning": "0.0",
+              "error": "None"
+            },
+            "enabled": false
+          }
+        ]
       },
       {
         "names": {
@@ -56,9 +66,27 @@
           "isKey": false,
           "isSynthetic": false,
           "isBackfilled": false,
-          "isCategorical": false
+          "isCategorical": false,
+          "isNumeric": null
         },
-        "constraints": null
+        "constraints": [
+          {
+            "name": "greater_equal",
+            "values": {
+              "warning": "0.0",
+              "error": "None"
+            },
+            "enabled": false
+          },
+          {
+            "name": "greater_equal",
+            "values": {
+              "warning": "0.0",
+              "error": "None"
+            },
+            "enabled": false
+          }
+        ]
       },
       {
         "names": {
@@ -85,7 +113,8 @@
           "isKey": false,
           "isSynthetic": false,
           "isBackfilled": false,
-          "isCategorical": true
+          "isCategorical": true,
+          "isNumeric": null
         },
         "constraints": null
       },
@@ -94,7 +123,7 @@
           "rawname": "trip_distance",
           "displayname": "Trip Distance",
           "descriptionshort": "Trip distance in miles",
-          "descriptionlong": "The elapsed trip distance in miles reported by the taximeter."
+          "descriptionlong": "The elapsed trip distance in miles reported by the taximeter. bgoo"
         },
         "types": {
           "ftype": "double",
@@ -114,9 +143,27 @@
           "isKey": false,
           "isSynthetic": false,
           "isBackfilled": false,
-          "isCategorical": false
+          "isCategorical": false,
+          "isNumeric": true
         },
-        "constraints": null
+        "constraints": [
+          {
+            "name": "greater_equal",
+            "values": {
+              "warning": "",
+              "error": ""
+            },
+            "enabled": false
+          },
+          {
+            "name": "greater_equal",
+            "values": {
+              "warning": "",
+              "error": ""
+            },
+            "enabled": false
+          }
+        ]
       },
       {
         "names": {
@@ -143,7 +190,8 @@
           "isKey": false,
           "isSynthetic": false,
           "isBackfilled": false,
-          "isCategorical": true
+          "isCategorical": true,
+          "isNumeric": null
         },
         "constraints": null
       },
@@ -172,7 +220,8 @@
           "isKey": false,
           "isSynthetic": false,
           "isBackfilled": false,
-          "isCategorical": true
+          "isCategorical": true,
+          "isNumeric": null
         },
         "constraints": null
       },
@@ -201,7 +250,8 @@
           "isKey": false,
           "isSynthetic": false,
           "isBackfilled": false,
-          "isCategorical": true
+          "isCategorical": true,
+          "isNumeric": null
         },
         "constraints": null
       },
@@ -230,7 +280,8 @@
           "isKey": false,
           "isSynthetic": false,
           "isBackfilled": false,
-          "isCategorical": true
+          "isCategorical": true,
+          "isNumeric": null
         },
         "constraints": null
       },
@@ -259,7 +310,8 @@
           "isKey": false,
           "isSynthetic": false,
           "isBackfilled": false,
-          "isCategorical": false
+          "isCategorical": false,
+          "isNumeric": null
         },
         "constraints": null
       }

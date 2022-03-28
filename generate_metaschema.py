@@ -1,5 +1,6 @@
-from typing import List, Optional, Union, Any, Callable
+from typing import List, Dict, Optional, Union, Any, Callable
 from pydantic import BaseModel
+import json, jsonschema
 
 # Generate Caspian Meta-Schema
 
@@ -31,6 +32,7 @@ class FieldFlags(BaseModel):
     isSynthetic: Optional[bool]
     isBackfilled: Optional[bool]
     isCategorical: Optional[bool]
+    isNumeric: Optional[bool]
 
 class Transforms(BaseModel):
     # Transform definitions
@@ -42,25 +44,18 @@ class FieldTransforms(BaseModel):
     # Transforms section of DataField - a list of Transforms
     transforms: Optional[List[Transforms]]
 
-class FieldConstraints(BaseModel):
+class Constraint(BaseModel):
     # Constraints section of DataField
-    equal: int
-    notEqual: int
-    greater: int
-    greaterEqual: int
-    less: int
-    lessEqual: int
-    multipleOf: int
-    monotonicAsc: int
-    monotonicDesc: int
-    matches: str
+    name: str
+    values: Dict[str, Any]
+    enabled: bool
 
 class DataField(BaseModel):
     names: FieldNames
     types: FieldTypes
     flags: Optional[FieldFlags]
     #transforms: Optional[FieldTransforms]
-    constraints: Optional[FieldConstraints]
+    constraints: Optional[List[Constraint]]
 
 class TableConstraints(BaseModel):
     # Constraints on the whole table
@@ -91,9 +86,14 @@ class CaspianSchema(BaseModel):
     """
     This is the Caspian meta-schema
     """
+    class Config:
+        schema_extra = {
+            '$schema': 'https://json-schema.org/draft/2019-09/schema'
+        }
     # dataset: Optional[DataSetData]
     model: Union[Tabular, Relational, Graph, Nested]
-
+    # model: Union[Graph, Nested]
+    #model: str
 
 def field_dict():
     # Utility function to return a dict of sub-fields of a DatField
@@ -112,10 +112,36 @@ def field_dict():
 
 def write_schema(fnam):
     # Write the schema as JSON
+    jsonout = CaspianSchema.schema_json(indent=2)
+    print('schema = ', jsonout)
     with open(fnam, 'w') as f:
-        f.write(CaspianSchema.schema_json(indent=2))
+        f.write(jsonout)
 
-#write_schema('schemas/caspian_metaschema.json')
+if __name__ == '__main__':
+    write_schema('schemas/caspian_metaschema.json')
+    schema_obj = CaspianSchema.schema()
+    # print(schema_obj)
+    res = jsonschema.Draft201909Validator(schema_obj)
+    print(res)
+    print('Schema validates against https://json-schema.org/draft/2019-09/schema')
+
+    #metaschema = json.load(open('schemas/caspian_metaschema.json'))
+    #schema = json.load(open('schemas/yellow_taxi.schema.json'))
+    #print('metaschema ', metaschema['title'])
+    #print('schema ', schema)
+    #jsonschema.validate(schema_obj, metaschema)
+#print(schema_obj)
+#schema_obj["$schema"] = "http://json-schema.org/draft-07/schema#"
+#schema = json.dumps(schema_obj, indent=2)
+#test = json.loads(schema)
+#print(schema)
+
+#with open('./schemas/json-schema.201909.json') as fh:
+#    schema201909 = json.load(fh)
+#jsonschema.validate(schema_obj, schema201909)
+#jsonschema.check_schema(dict(schema_obj))
+
+
 
 
 

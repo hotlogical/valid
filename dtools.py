@@ -4,12 +4,15 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pyarrow.csv as csv
 import generate_metaschema as gm
+import jsonschema
 
-#@st.cache
+
 def load_data(dataurl, columns=None):
     # Load a dataset - get size stats
     fpq = 'data/' + dataurl.split('/')[-1].replace('.csv', '') + '.parquet'
+    print(fpq)
     fcsv = fpq.replace('parquet', 'csv')
+    print(fcsv)
     if not os.path.exists(fpq):
         if os.path.exists(fcsv):
             dataurl = fcsv
@@ -67,7 +70,10 @@ def setcolmetadata(pt, n, section, mdict, parquet_file=None):
         newmd = json.loads(dict(oldmd)[b'caspian'].decode())  # Grab the old Caspian metadata
         if section not in newmd:
             newmd[section] = {}
-        newmd[section].update(mdict)
+        if type(mdict) == list:
+            newmd[section] = mdict
+        else:  # case of dict
+            newmd[section].update(mdict)
         newmd = {b'caspian': json.dumps(newmd).encode()}
     sfields[n] = pa.field(st.field(n).name, st.field(n).type, metadata=newmd)
     newst = pa.schema(sfields, st.metadata)  # Build the new schema
@@ -79,6 +85,22 @@ def setcolmetadata(pt, n, section, mdict, parquet_file=None):
 def readcolmetadata(pt, n, section=None):
     # Get the column metadata from arrow/parquet schema
     md = pt.schema.field(n).metadata
+    if md is None:  # Column has no metadata
+        return {}
+    if not b'caspian' in md:
+        return {}  # Column has no Caspian metadata
+    metad = json.loads(md[b'caspian'].decode())
+    if not metad:
+        return {}  # There was no payload
+    if section is None:
+        return metad  # Send back all of the metadata
+    if not section in metad:
+        return {}  # No metadata for the section we requested
+    return metad[section]  # Send back the section metadata
+
+def readcolmetadata2(parquet_file, n, section=None):
+    # Get the column metadata from arrow/parquet schema
+    md = pq.read_schema(parquet_file).field(n).metadata
     if md is None:  # Column has no metadata
         return {}
     if not b'caspian' in md:
@@ -106,6 +128,9 @@ def generate_schema(parquet_file):
         return None  # Found no metadata
     tabular = gm.Tabular(fields=fields)
     model = gm.CaspianSchema(model=tabular)
+    # validate schema
+    #metaschema = json.load(open('schemas/caspian_metaschema.json'))
+    #jsonschema.validate(model, metaschema)
     return model
 
     #return json.dumps(sc, indent=2)

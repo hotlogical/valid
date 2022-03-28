@@ -1,10 +1,10 @@
 import streamlit as st
 from dtools import load_data, get_row_data, generate_schema
-from stools import make_fields, colbox, make_table
+from stools import make_fields, dtypcol, colbox, make_table
 
 # Must be first command executed
 st.set_page_config(layout="wide")
-st.title('Data description wizard')
+st.title('Data description tool')
 
 # Define datasets and choose one
 ccols = st.columns((1, 5))
@@ -17,6 +17,7 @@ with ccols[0]:  # dataset chooser dropdown
         ingestion = '2021-07'
         dataurl = f'https://nyc-tlc.s3.amazonaws.com/trip+data/yellow_tripdata_{ingestion}.csv'
         selcols = 'tpep_pickup_datetime tpep_dropoff_datetime passenger_count trip_distance store_and_fwd_flag PULocationID DOLocationID payment_type fare_amount'.split()
+        # selcols = None
     elif option == 'citibike':
         ingestion = '202201'
         ingestion = '202107'
@@ -34,7 +35,8 @@ st.write(f'{nrows:,} rows _ {ncols} columns ___ On disk _ {rsize:.1f} MB (raw) _
 
 # Show a dataframe of the first n rows
 df = pt.slice(0, 20).to_pandas()
-st.dataframe(df, height=200)
+st.dataframe(df.style.applymap(dtypcol), height=200)
+df.to_csv('test.csv')
 
 # Get raw metadata from the parquet file
 row_data = get_row_data(parquet_file, selcols)
