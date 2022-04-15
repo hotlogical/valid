@@ -1,6 +1,6 @@
 import pyarrow as pa
 import pyarrow.parquet as pq
-from dtools import setcolmetadata, readcolmetadata
+from datatools import setcolmetadata, readcolmetadata
 
 # Tests for reading / writing metadata
 fnam2 = 'data/yellow_tripdata_test2.parquet'

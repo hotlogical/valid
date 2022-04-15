@@ -3,6 +3,9 @@
   "description": "This is the Caspian meta-schema",
   "type": "object",
   "properties": {
+    "dataset": {
+      "$ref": "#/definitions/DataSetData"
+    },
     "model": {
       "title": "Model",
       "anyOf": [
@@ -22,48 +25,109 @@
     }
   },
   "required": [
+    "dataset",
     "model"
   ],
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
   "definitions": {
-    "FieldNames": {
-      "title": "FieldNames",
+    "DataSetData": {
+      "title": "DataSetData",
       "type": "object",
       "properties": {
-        "rawname": {
-          "title": "Rawname",
+        "name": {
+          "title": "Name",
           "type": "string"
         },
-        "displayname": {
-          "title": "Displayname",
+        "datatype": {
+          "title": "Datatype",
           "type": "string"
         },
-        "descriptionshort": {
-          "title": "Descriptionshort",
-          "type": "string"
-        },
-        "descriptionlong": {
-          "title": "Descriptionlong",
+        "uid": {
+          "title": "Uid",
           "type": "string"
         }
       },
       "required": [
-        "rawname"
+        "name",
+        "datatype",
+        "uid"
+      ]
+    },
+    "Status": {
+      "title": "Status",
+      "type": "object",
+      "properties": {
+        "status": {
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status"
+      ]
+    },
+    "TableData": {
+      "title": "TableData",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "uid": {
+          "title": "Uid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "uid"
+      ]
+    },
+    "FieldNames": {
+      "title": "FieldNames",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "title": "Uid",
+          "type": "string"
+        },
+        "raw_name": {
+          "title": "Raw Name",
+          "type": "string"
+        },
+        "display_name": {
+          "title": "Display Name",
+          "type": "string"
+        },
+        "description_short": {
+          "title": "Description Short",
+          "type": "string"
+        },
+        "description_long": {
+          "title": "Description Long",
+          "type": "string"
+        }
+      },
+      "required": [
+        "uid",
+        "raw_name"
       ]
     },
     "FieldTypes": {
       "title": "FieldTypes",
       "type": "object",
       "properties": {
-        "ftype": {
-          "title": "Ftype",
+        "pq_type": {
+          "title": "Pq Type",
           "type": "string"
         },
-        "logicaltype": {
-          "title": "Logicaltype",
+        "logical_type": {
+          "title": "Logical Type",
           "type": "string"
         },
-        "arrowtype": {
-          "title": "Arrowtype",
+        "arrow_type": {
+          "title": "Arrow Type",
           "type": "string"
         },
         "representation": {
@@ -76,121 +140,89 @@
         }
       },
       "required": [
-        "ftype"
+        "pq_type"
       ]
     },
     "FieldFlags": {
       "title": "FieldFlags",
       "type": "object",
       "properties": {
-        "isRaw": {
-          "title": "Israw",
+        "is_raw": {
+          "title": "Is Raw",
           "type": "boolean"
         },
-        "isPII": {
-          "title": "Ispii",
+        "is_pii": {
+          "title": "Is Pii",
           "type": "boolean"
         },
-        "isUnique": {
-          "title": "Isunique",
+        "is_standardised": {
+          "title": "Is Standardised",
           "type": "boolean"
         },
-        "isStandardised": {
-          "title": "Isstandardised",
+        "is_transformed": {
+          "title": "Is Transformed",
           "type": "boolean"
         },
-        "isTransformed": {
-          "title": "Istransformed",
+        "is_inherited": {
+          "title": "Is Inherited",
           "type": "boolean"
         },
-        "inInherited": {
-          "title": "Ininherited",
+        "is_join": {
+          "title": "Is Join",
           "type": "boolean"
         },
-        "isJoin": {
-          "title": "Isjoin",
+        "is_key": {
+          "title": "Is Key",
           "type": "boolean"
         },
-        "isKey": {
-          "title": "Iskey",
+        "is_synthetic": {
+          "title": "Is Synthetic",
           "type": "boolean"
         },
-        "isSynthetic": {
-          "title": "Issynthetic",
+        "is_backfilled": {
+          "title": "Is Backfilled",
           "type": "boolean"
         },
-        "isBackfilled": {
-          "title": "Isbackfilled",
+        "is_categorical": {
+          "title": "Is Categorical",
           "type": "boolean"
         },
-        "isCategorical": {
-          "title": "Iscategorical",
+        "is_numeric": {
+          "title": "Is Numeric",
           "type": "boolean"
         }
       }
     },
-    "FieldConstraints": {
-      "title": "FieldConstraints",
+    "Constraint": {
+      "title": "Constraint",
       "type": "object",
       "properties": {
-        "equal": {
-          "title": "Equal",
-          "type": "integer"
-        },
-        "notEqual": {
-          "title": "Notequal",
-          "type": "integer"
-        },
-        "greater": {
-          "title": "Greater",
-          "type": "integer"
-        },
-        "greaterEqual": {
-          "title": "Greaterequal",
-          "type": "integer"
-        },
-        "less": {
-          "title": "Less",
-          "type": "integer"
-        },
-        "lessEqual": {
-          "title": "Lessequal",
-          "type": "integer"
-        },
-        "multipleOf": {
-          "title": "Multipleof",
-          "type": "integer"
-        },
-        "monotonicAsc": {
-          "title": "Monotonicasc",
-          "type": "integer"
-        },
-        "monotonicDesc": {
-          "title": "Monotonicdesc",
-          "type": "integer"
-        },
-        "matches": {
-          "title": "Matches",
+        "name": {
+          "title": "Name",
           "type": "string"
+        },
+        "values": {
+          "title": "Values",
+          "type": "object"
+        },
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean"
         }
       },
       "required": [
-        "equal",
-        "notEqual",
-        "greater",
-        "greaterEqual",
-        "less",
-        "lessEqual",
-        "multipleOf",
-        "monotonicAsc",
-        "monotonicDesc",
-        "matches"
+        "name",
+        "values",
+        "enabled"
       ]
     },
     "DataField": {
       "title": "DataField",
       "type": "object",
       "properties": {
+        "status": {
+          "$ref": "#/definitions/Status"
+        },
         "names": {
           "$ref": "#/definitions/FieldNames"
         },
@@ -201,7 +233,11 @@
           "$ref": "#/definitions/FieldFlags"
         },
         "constraints": {
-          "$ref": "#/definitions/FieldConstraints"
+          "title": "Constraints",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Constraint"
+          }
         }
       },
       "required": [
@@ -213,17 +249,27 @@
       "title": "Tabular",
       "type": "object",
       "properties": {
+        "status": {
+          "$ref": "#/definitions/Status"
+        },
+        "table_data": {
+          "$ref": "#/definitions/TableData"
+        },
         "fields": {
           "title": "Fields",
           "type": "array",
           "items": {
             "$ref": "#/definitions/DataField"
           }
+        },
+        "table_constraints": {
+          "title": "Table Constraints",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Constraint"
+          }
         }
-      },
-      "required": [
-        "fields"
-      ]
+      }
     },
     "Relational": {
       "title": "Relational",
@@ -262,7 +308,10 @@
           "title": "Name",
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "name"
+      ]
     }
   }
 }

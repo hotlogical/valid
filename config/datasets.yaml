@@ -1,0 +1,45 @@
+%YAML 1.2
+---
+base_dir: data/
+dataset_dir: "data/{x}/"
+raw_dir: "data/{x}/raw/"
+valid_dir: "data/{x}/valid/"
+ingested_dir: "data/{x}/ingested/"
+datasets:
+  yellow_taxi:
+    url: "https://nyc-tlc.s3.amazonaws.com/trip+data/yellow_tripdata_{x}.csv"
+    pattern: yellow_tripdata_{x}
+    default: 2021-06
+    columns: [tpep_pickup_datetime, tpep_dropoff_datetime, passenger_count, trip_distance, store_and_fwd_flag, PULocationID, DOLocationID, payment_type, fare_amount]
+    ingestions:
+      - 2020-01
+      - 2020-02
+      - 2020-03
+      - 2020-04
+      - 2020-05
+      - 2020-06
+      - 2020-07
+      - 2020-08
+      - 2020-09
+      - 2020-10
+      - 2020-11
+      - 2020-12
+      - 2021-01
+      - 2021-02
+      - 2021-03
+      - 2021-04
+      - 2021-05
+      - 2021-06
+      - 2021-07
+  citibike:
+    url: https://nyc-tlc.s3.amazonaws.com/trip+data/{x}-citibike-tripdata.csv
+    pattern: "{x}-citibike-tripdata"
+    default: "202107"
+    ingestions:
+      - 202107
+  taxi_zones:
+    url: "https://s3.amazonaws.com/nyc-tlc/misc/taxi+_zone_{x}.csv"
+    pattern: taxi+_zone_{x}
+    default: lookup
+    ingestions:
+      - lookup
