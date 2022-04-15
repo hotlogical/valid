@@ -115,10 +115,10 @@ class ECanvas:
             poo = None
             #buf = TImageBuffer()
             #timg.GetImageBuffer(buf, buf.BufferSize())
-            a = self.c.Print('graph.png', 'png')
-            f = TFile().Open('graph.root', "RECREATE")
-            self.c.Write()
-            f.Close()
+            #### a = self.c.Print('graph.png', 'png')
+            #### f = TFile().Open('graph.root', "RECREATE")
+            #### self.c.Write()
+            #### f.Close()
             # js = TBufferJSON.ExportToFile('graph.json', self.c)  # .Data()
             js = TBufferJSON.ConvertToJSON(self.c, 23).Data()  # .replace('\n', '')
             #with open('graph.json', 'w') as fh:
@@ -153,7 +153,7 @@ class CanvasManager:
             inline = self.allinline
         if name in self.canvases:
             return self.canvases[name]
-        print('gROOT.SetBatch(inline) %s' % inline)
+        # print('gROOT.SetBatch(inline) %s' % inline)
         gROOT.SetBatch(inline)
         self.canvases[name] = ECanvas(name, inline, width, height, topx, topy)
         if inline and not self.allinline:
@@ -905,15 +905,18 @@ class pROOT:
             fitpointer = g.Fit(func, fitoptions)
 
         g.Draw(options)  # again !
+        img = None
         if display:
             canvas.Modified()
             canvas.Update()
             if self.isinline() or out:
-                self.show(out)
+                img = self.show(out)
         self.things.append(g)
         # gc.collect()
         if fit:
             return g, fitpointer
+        if img is not None:
+            return g, img
         return g
 
     def rh(self, x, nbins=40, xlow=None, xhigh=None, o='', t='h', f=False,

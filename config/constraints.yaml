@@ -1,0 +1,89 @@
+%YAML 1.2
+---
+constraints:
+  greater:
+    - int64
+    - int32
+    - is_numeric
+    - float64
+    - float32
+    - double
+    - string
+    - byte_array
+    - timestamp
+  greater_equal:
+    - int64
+    - int32
+    - is_numeric
+    - float64
+    - float32
+    - double
+    - string
+    - byte_array
+    - timestamp
+  less:
+    - int64
+    - int32
+    - is_numeric
+    - float64
+    - float32
+    - double
+    - string
+    - byte_array
+    - timestamp
+  less_equal:
+    - int64
+    - int32
+    - is_numeric
+    - float64
+    - float32
+    - double
+    - string
+    - byte_array
+    - timestamp
+  not_equal:
+    - int64
+    - int32
+    - is_numeric
+    - float64
+    - float32
+    - double
+    - string
+    - byte_array
+    - timestamp
+  multiple_of:
+    - int64
+    - int32
+    - is_numeric
+    - float64
+    - float32
+    - double
+    - string
+    - byte_array
+    - timestamp
+  unique:
+    - int64
+    - int32
+    - is_numeric
+    - float64
+    - float32
+    - double
+    - string
+    - byte_array
+    - timestamp
+  min_length:
+    - string
+    - byte_array
+  max_length:
+    - string
+    - byte_array
+  format:
+    - string
+    - byte_array
+  regex:
+    - string
+    - byte_array
+  allowed_values:
+    - is_categorical
+    - string
+    - byte_array

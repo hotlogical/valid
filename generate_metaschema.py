@@ -1,44 +1,45 @@
 from typing import List, Dict, Optional, Union, Any, Callable
 from pydantic import BaseModel
-import json, jsonschema
+# import json
+import jsonschema
 
 # Generate Caspian Meta-Schema
 
 class FieldNames(BaseModel):
     # Names section of DataField
-    rawname: str
-    displayname: Optional[str]
-    descriptionshort: Optional[str]
-    descriptionlong: Optional[str]
+    uid: str
+    raw_name: str
+    display_name: Optional[str]
+    description_short: Optional[str]
+    description_long: Optional[str]
 
 class FieldTypes(BaseModel):
     # Types section of DataField
-    ftype: str
-    logicaltype: Optional[str]
-    arrowtype: Optional[str]
+    pq_type: str
+    logical_type: Optional[str]
+    arrow_type: Optional[str]
     representation: Optional[str]
     units: Optional[str]
 
 class FieldFlags(BaseModel):
     # Flags section of DataField
-    isRaw: Optional[bool]
-    isPII: Optional[bool]
-    isUnique: Optional[bool]
-    isStandardised: Optional[bool]
-    isTransformed: Optional[bool]
-    inInherited: Optional[bool]
-    isJoin: Optional[bool]
-    isKey: Optional[bool]
-    isSynthetic: Optional[bool]
-    isBackfilled: Optional[bool]
-    isCategorical: Optional[bool]
-    isNumeric: Optional[bool]
+    is_raw: Optional[bool]
+    is_pii: Optional[bool]
+    is_standardised: Optional[bool]
+    is_transformed: Optional[bool]
+    is_inherited: Optional[bool]
+    is_join: Optional[bool]
+    is_key: Optional[bool]
+    is_synthetic: Optional[bool]
+    is_backfilled: Optional[bool]
+    is_categorical: Optional[bool]
+    is_numeric: Optional[bool]
 
 class Transforms(BaseModel):
     # Transform definitions
-    StrToDate: Optional[Callable]
-    MilesToKm: Optional[Callable]
-    LatLonToH3: Optional[Callable]
+    str_to_date: Optional[Callable]
+    miles_to_km: Optional[Callable]
+    latlon_to_H3: Optional[Callable]
 
 class FieldTransforms(BaseModel):
     # Transforms section of DataField - a list of Transforms
@@ -50,36 +51,40 @@ class Constraint(BaseModel):
     values: Dict[str, Any]
     enabled: bool
 
+class Status(BaseModel):
+    status: str
+
 class DataField(BaseModel):
+    status: Optional[Status]
     names: FieldNames
     types: FieldTypes
     flags: Optional[FieldFlags]
     #transforms: Optional[FieldTransforms]
     constraints: Optional[List[Constraint]]
 
-class TableConstraints(BaseModel):
-    # Constraints on the whole table
-    Sum: int
-
 class TableData(BaseModel):
     # Table metadata
     name: str
+    uid: str
 
 class DataSetData(BaseModel):
     name: str
+    datatype: str
+    uid: str
 
 class Tabular(BaseModel):
-    tabledata: Optional[TableData]
-    fields: List[DataField]
-    # tableconstraints: Optional[TableConstraints]
+    status: Optional[Status]
+    table_data: Optional[TableData]
+    fields: Optional[List[DataField]]
+    table_constraints: Optional[List[Constraint]]
 
 class Relational(BaseModel):
     relational: List[Tabular]
 
-class Nested(BaseModel):
-    name: Optional[str]
-
 class Graph(BaseModel):
+    name: str
+
+class Nested(BaseModel):
     name: str
 
 class CaspianSchema(BaseModel):
@@ -90,35 +95,34 @@ class CaspianSchema(BaseModel):
         schema_extra = {
             '$schema': 'https://json-schema.org/draft/2019-09/schema'
         }
-    # dataset: Optional[DataSetData]
+    dataset: DataSetData
     model: Union[Tabular, Relational, Graph, Nested]
-    # model: Union[Graph, Nested]
-    #model: str
+
 
 def field_dict():
-    # Utility function to return a dict of sub-fields of a DatField
+    # Utility function to return a dict of sub-fields of a DataField
     fdict = {}
     subfields = []
     dfields = DataField.__fields__
-    print('dfields ', dfields)
+    # print('dfields ', dfields)
     for fieldgroup in dfields:
         field = dfields[fieldgroup]
-        print('\tfield blob', field)
+        # print('\tfield blob', field)
         typ = field.type_
         subfields = list(typ.__fields__.keys())
-        print('\tsubfields', subfields)
+        # print('\tsubfields', subfields)
         fdict[fieldgroup] = subfields
     return fdict
 
-def write_schema(fnam):
-    # Write the schema as JSON
+def write_metaschema(fnam):
+    # Write the metaschema as JSON
     jsonout = CaspianSchema.schema_json(indent=2)
     print('schema = ', jsonout)
     with open(fnam, 'w') as f:
         f.write(jsonout)
 
 if __name__ == '__main__':
-    write_schema('schemas/caspian_metaschema.json')
+    write_metaschema('schemas/caspian_metaschema.json')
     schema_obj = CaspianSchema.schema()
     # print(schema_obj)
     res = jsonschema.Draft201909Validator(schema_obj)
@@ -145,25 +149,6 @@ if __name__ == '__main__':
 
 
 
-# Simple schema generation test
-
-#fieldname1 = FieldNames(rawname='tpep_pickup_datetime')
-#fieldtype1 = FieldTypes(ftype='int64')
-#datafield1 = DataField(names=fieldname1, types=fieldtype1)
-
-#fieldname2 = FieldNames(rawname='tpep_pickup_datetime')
-#fieldtype2 = FieldTypes(ftype='double')
-#datafield2 = DataField(names=fieldname2, types=fieldtype2)
-
-#tabular = Tabular(fields=[datafield1, datafield2])
-#model = CaspianSchema(model=tabular)
-
-#print('printing schema')
-#print(model.schema_json(indent=2))  # This prints the whole meta-schema
-
-#print(model.dict())  # This prints a dict of just the definied schema
-
-#print(model.json(indent=2))  # This prints just the defined model schema as JSON
 
 
 
