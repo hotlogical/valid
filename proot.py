@@ -946,7 +946,7 @@ class pROOT:
         self.handleargs(h, t, mn, mx, l, ti, xmin, xmax, w, m, xe, ye)
         gotwgts = False
         if len(x.shape) == 1:
-        #if 1 == 1:
+        # if 1 == 1:
             # xd = x.replace([np.inf, -np.inf], np.nan).dropna()
             if ti:
                 x = x.values.astype(int) / 1000000000
