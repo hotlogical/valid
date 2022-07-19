@@ -3,13 +3,27 @@ import pandas as pd
 import numpy as np
 import proot
 from dotmap import DotMap
-from destools import colbox, rgraph
+from destools import colbox
+import streamlit.components.v1 as components
 
 col_map = {0: 'Green', 1: 'Orange', 2: 'Red'}
 
 # Setup ROOT
-pr = proot.pROOT(True, False)
+pr = proot.pROOT(True)
 c2 = pr.createCanvas('c2', inline=True, width=800, height=800)
+
+
+def dtypcol(cval):
+    cmap = {'int': 'background-color:#FFEEFF',
+            'float': 'background-color:#FFFFEE',
+            'Timestamp': 'background-color:#DDFFFF',
+            'date': 'background-color:#DDFFFF',
+            'time': 'background-color:#DDFFFF'}
+    dtyp = type(cval).__name__
+    # print(dtyp)
+    if dtyp in cmap:
+        return cmap[dtyp]
+    return ''
 
 
 def validate_table(valid):
@@ -23,6 +37,13 @@ def make_num_row_graph(rows, vs):
     g, json = pr.rg(na, t=f'num Rows;ingestion', out='st')
     rgraph(json)
 
+def rgraph(js):
+    components.html(f'''
+        <div id="drawing" ></div>
+        <script type="text/javascript" src="https://root.cern/js/latest/scripts/JSRoot.core.js"></script>
+        <script type='text/javascript'>
+            JSROOT.draw("drawing", JSROOT.parse({js}));
+        </script>''', width=800, height=400)
 
 def validate_column_names(valid):
     table = valid['table']
@@ -141,6 +162,7 @@ def make_columns(valid, schema):
     checks = valid.table.column_checks
     for i, col_name in enumerate(checks):
         make_column_row(col_name, checks, cols, schema.model.fields[i])
+    st.markdown('---')
 
 
 def make_ingestions_row(ingestion, validations, cols, schema):

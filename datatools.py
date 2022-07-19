@@ -1,5 +1,7 @@
 import os
 import glob
+from dataclasses import dataclass, field
+from typing import Optional, List, Dict
 import hashlib
 import json
 import yaml
@@ -10,8 +12,45 @@ from dotmap import DotMap
 import generate_metaschema as gm
 import schema_tools as stls
 import jsonschema
+import streamlit as st
+
+@dataclass
+class FileInfo:
+    url: str
+    csv: str
+    parquet: str
+    csv_size: float = 0
+    parquet_size: float = 0
+    mem_size: float = 0
+    pq_num_cols = 0
+    pq_num_rows = 0
+    columns: Optional[List] = field(default_factory=lambda: None)
+    types: Optional[Dict] = field(default_factory=lambda: None)
+    def get_csv_size(self):
+        self.csv_size = os.path.getsize(self.csv) / 1000000
+    def get_parquet_size(self):
+        self.parquet_size = os.path.getsize(self.parquet) / 1000000
+    def get_mem_size(self):
+        if not os.path.exists(self.parquet):
+            csv_to_parquet(self.csv, self.parquet, self.columns)
+        pt = read_parquet(self.parquet, columns=self.columns)
+        self.mem_size = pt.nbytes / 1000000
+        self.pq_num_cols = pt.num_columns
+        self.pq_num_rows = pt.num_rows
 
 
+@st.experimental_memo
+def get_file_info(dataset_name, dataurl, columns=None):
+    csv_filename = f'data/{dataset_name}/raw/' + dataurl.split('/')[-1]
+    parquet_filename = csv_filename.replace('csv', 'parquet')
+    file_info = FileInfo(dataurl, csv_filename, parquet_filename, columns=columns)
+    file_info.get_csv_size()
+    file_info.get_mem_size()
+    file_info.get_parquet_size()
+    return file_info
+
+
+# @st.experimental_memo
 def load_data(dataset_name, dataurl, columns=None):
     # Load a dataset - as an arrow table from parquet
     # If parquet file does not exist - convert csv to parquet
@@ -20,21 +59,31 @@ def load_data(dataset_name, dataurl, columns=None):
     if not os.path.exists(pq_filename):
         if os.path.exists(csv_filename):
             csv_to_parquet(csv_filename, pq_filename)
+        # if os.path.exists(f'{csv_filename}.zip'):
+        #     with zipfile.ZipFile(f'{csv_filename}.zip', 'r') as fh:
+        #         csv_to_parquet(fh, pq_filename)
     # df = pd.read_parquet(fpq, columns=columns)
     pt = pq.read_table(pq_filename, columns)
     return pt, pq_filename, csv_filename
 
 
-def csv_to_parquet(csv_filename, pq_filename):
-    pt = csv.read_csv(csv_filename)
+
+def read_parquet(pq_filename, columns=None):
+    pt = pq.read_table(pq_filename, columns)
+    return pt
+
+def get_n_rows_to_df(pq_filename, num_rows=10):
+    pf = pq.ParquetFile(pq_filename)
+    first_ten_rows = next(pf.iter_batches(batch_size=num_rows))
+    df = pa.Table.from_batches([first_ten_rows]).to_pandas()
+    return df
+
+def csv_to_parquet(csv_filename, pq_filename, select_columns=None, data_types=None):
+    convert_options = csv.ConvertOptions(column_types=data_types, include_columns=select_columns)
+    pt = csv.read_csv(csv_filename, convert_options=convert_options)
     pq.write_table(pt, pq_filename, version='2.6', compression='none')
-
-
-def get_data_size(pq_table, pq_filename, csv_filename):
-    csv_size = os.path.getsize(csv_filename) / 1000000
-    pq_size = os.path.getsize(pq_filename) / 1000000
-    mem_size = pq_table.nbytes / 1000000
-    return csv_size, pq_size, mem_size
+    mem_size = pt.nbytes / 1000000
+    return mem_size
 
 
 def get_schema(dataset_name, pq_filename, select_columns=None):
@@ -63,7 +112,8 @@ def get_datasets():
 def get_dataset_dirs(dataset_name, ds_info=None):
     if ds_info is None:
         ds_info = get_datasets()
-    dataset_dirs = {d: ds_info[d].replace('{x}', dataset_name) for d in 'dataset_dir raw_dir valid_dir'.split()}
+    dataset_dirs = {d: ds_info[d].replace('{x}', dataset_name) for d in
+                    'dataset_dir raw_dir valid_dir ingested_dir'.split()}
     return dataset_dirs
 
 
@@ -109,8 +159,8 @@ def get_row_data(parquet_file, selcols, dotmap=False):
     md = pq.read_metadata(parquet_file)
     sc = pq.read_schema(parquet_file)
     rd = {'num_columns': md.num_columns, 'num_rows': md.num_rows, 'num_row_groups': md.num_row_groups}
-    if rd['num_row_groups'] != 1:
-        raise ImportError
+#    if rd['num_row_groups'] != 1:
+#        raise ImportError
     rg = md.row_group(0)
     rd['fields'] = {}
     for i in range(md.num_columns):

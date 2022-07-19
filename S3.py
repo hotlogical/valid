@@ -12,6 +12,7 @@ s3 = boto3.client('s3',
     config=config,
     use_ssl=True)
 
-list_obj = s3.list_objects(Bucket="marketplace-raw-data", Prefix="07f0f735-6d79-40de-a614-36898e483282/2cfb3873-d99c-4ab2-8029-695937309c59.csv")
+#list_obj = s3.list_objects(Bucket="marketplace-raw-data", Prefix="07f0f735-6d79-40de-a614-36898e483282/2cfb3873-d99c-4ab2-8029-695937309c59.csv")
+list_obj = s3.list_objects(Bucket="test-validation", Prefix="07f0f735-6d79-40de-a614-36898e483282/2cfb3873-d99c-4ab2-8029-695937309c59.csv")
 for item in list_obj['Contents']:
     print(item)

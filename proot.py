@@ -194,7 +194,7 @@ class CanvasManager:
 
 class pROOT:
 
-    def __init__(self, inline=False, dark=False):
+    def __init__(self, inline=False, dark=None):
 
         self.gr = gROOT
         if inline:
@@ -219,7 +219,7 @@ class pROOT:
         #        self.PassByRef = PassByRef
         self.cols = {}
         self.setDefStyle()
-        if dark:
+        if dark is not None:
             self.setDark()
         self.TLegend = TLegend
         self.TGraph = TGraph

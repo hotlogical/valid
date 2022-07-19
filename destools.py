@@ -5,7 +5,7 @@ import pyarrow.compute as pc
 #  import jsonschema
 import generate_metaschema as gm
 import proot
-from datatools import get_constraints, type_constraints  # , setcolmetadata, readcolmetadata, readcolmetadata2
+from datatools import get_constraints, type_constraints, read_parquet  # , setcolmetadata, readcolmetadata, readcolmetadata2
 import streamlit.components.v1 as components
 
 
@@ -23,7 +23,9 @@ all_constraints = get_constraints()
 def dtypcol(cval):
     cmap = {'int': 'background-color:#002200',
             'float': 'background-color:#000044',
-            'Timestamp': 'background-color:#330000'}
+            'Timestamp': 'background-color:#330000',
+            'date': 'background-color:#330000',
+            'time': 'background-color:#330000'}
     dtyp = type(cval).__name__
     # print(dtyp)
     if dtyp in cmap:
@@ -156,7 +158,7 @@ def make_time_stats(field_data, fa):
 
 def make_field_stats(i, field_data, pt, schema):
     # Make different stats depending on field type
-    fa = pt.column(i)
+    fa = pt.column(0)
     if field_data['logical'].startswith('TIMESTAMP'):
         make_time_stats(field_data, fa)  # Special for datatimes
         return
@@ -197,6 +199,7 @@ def make_names_section(i, section, fdict, parquet_file, schema):
             st.write('Writing schema changes to ', parquet_file)
             setattr(schema.model.fields[i], section, sections[section](**response))
             # pt = setcolmetadata(pt, i, section, response, parquet_file)
+        return schema
 
 
 def make_names_types_flags_form(i, parquet_file, schema):
@@ -205,8 +208,8 @@ def make_names_types_flags_form(i, parquet_file, schema):
     cols = st.columns((2., 2., 2.))
     for k, section in enumerate(form_sections):
         with cols[k]:
-            make_names_section(i, section, fdict, parquet_file, schema)
-
+            schema = make_names_section(i, section, fdict, parquet_file, schema)
+    return schema
 
 def make_constraints_form(n, field_data, parquet_file, schema):
     field = field_data['field_name']
@@ -279,7 +282,8 @@ def make_constraints_form(n, field_data, parquet_file, schema):
     return schema
 
 
-def make_field_content(i, field_data, pt, parquet_file, schema):
+def make_field_content(i, field_data, parquet_file, schema):
+    pt = read_parquet(parquet_file, [field_data['field_name']])
     st.write('<style>div.row-widget.stRadio > div{flex-direction:row;} </style>',
              unsafe_allow_html=True)
     tab = st.radio('', ['Distribution', 'Statistics .', 'Names Types Flags  .', 'Constraints .',
@@ -287,10 +291,10 @@ def make_field_content(i, field_data, pt, parquet_file, schema):
     if tab == 'Distribution':  # Show graph of data and some stats
         make_field_stats(i, field_data, pt, schema)
     if tab == 'Statistics .':  # Further stats
-        df = pt.column(i).to_pandas().describe()
+        df = pt.column(0).to_pandas().describe(include='all')
         st.write(df)
     if tab == 'Names Types Flags  .':  # Form to enter schema details
-        make_names_types_flags_form(i, parquet_file, schema)
+        schema = make_names_types_flags_form(i, parquet_file, schema)
     if tab == 'Constraints .':  # Form to enter constraint details
         schema = make_constraints_form(i, field_data, parquet_file, schema)
     if tab == 'Transforms Standardizations':
@@ -309,7 +313,7 @@ def close_other_fields(fkey, field_data):
                 st.session_state[thisfkey] = False
 
 
-def make_field_row(r, field_data, cols, pt, parquet_file, schema):
+def make_field_row(r, field_data, cols, parquet_file, schema):
     # First the row containing the parquet metadata
     allfielddata = field_data
     field_data = field_data[list(field_data.keys())[r]]
@@ -335,11 +339,11 @@ def make_field_row(r, field_data, cols, pt, parquet_file, schema):
                     st.text(field_data[col])
         if showfield:
             # Then the details
-            schema = make_field_content(r, field_data, pt, parquet_file, schema)
+            schema = make_field_content(r, field_data, parquet_file, schema)
     return schema
 
 
-def make_fields(field_data, pt, parquet_file, schema):
+def make_fields(field_data, parquet_file, schema):
     # Main loop to generate each field
 
     # Format the headers for the field sections
@@ -349,7 +353,7 @@ def make_fields(field_data, pt, parquet_file, schema):
     # Make the individual data field sections
     make_data_header(cols)
     for i, fd in enumerate(field_data):
-        schema = make_field_row(i, field_data, cols, pt, parquet_file, schema)
+        schema = make_field_row(i, field_data, cols, parquet_file, schema)
     return schema
 
 

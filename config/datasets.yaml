@@ -3,15 +3,16 @@
 base_dir: data/
 dataset_dir: "data/{x}/"
 raw_dir: "data/{x}/raw/"
-valid_dir: "data/{x}/valid/"
+valid_dir: "data/{x}/validation/"
 ingested_dir: "data/{x}/ingested/"
 datasets:
   yellow_taxi:
     url: "https://nyc-tlc.s3.amazonaws.com/trip+data/yellow_tripdata_{x}.csv"
     pattern: yellow_tripdata_{x}
-    default: 2021-06
+    default: 2021-07
     columns: [tpep_pickup_datetime, tpep_dropoff_datetime, passenger_count, trip_distance, store_and_fwd_flag, PULocationID, DOLocationID, payment_type, fare_amount]
     ingestions:
+#      - 2010-07
       - 2020-01
       - 2020-02
       - 2020-03
@@ -31,6 +32,7 @@ datasets:
       - 2021-05
       - 2021-06
       - 2021-07
+      - 2021-07.test
   citibike:
     url: https://nyc-tlc.s3.amazonaws.com/trip+data/{x}-citibike-tripdata.csv
     pattern: "{x}-citibike-tripdata"
@@ -43,3 +45,29 @@ datasets:
     default: lookup
     ingestions:
       - lookup
+  flight_radar24:
+    url: "https://nyc-tlc.s3.amazonaws.com/trip+data/flight_radar24_{x}.csv"
+    pattern: flight_radar24_{x}
+    default: all
+    ingestions:
+      - all
+      - 2022-01
+      - 2022-02
+      - 2022-03
+      - 2022-04
+  intuizi:
+    url: https://us-east-1.console.aws.amazon.com/s3/buckets/intuizi-external/test_{x}.csv
+    pattern: test_{x}.csv
+    default: test5
+    ingestions:
+      - test3
+      - test4
+      - test5
+  techselerator:
+    url: https://us-east-1.console.aws.amazon.com/s3/buckets/intuizi-external/Neom_UK_Extract_{x}_UTF_8.csv
+    pattern: test_{x}.csv
+    default: test5
+    ingestions:
+      - test3
+      - test4
+      - test5

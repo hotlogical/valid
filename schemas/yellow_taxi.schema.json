@@ -2,7 +2,7 @@
   "dataset": {
     "name": "yellow_taxi",
     "datatype": "Tabular",
-    "uid": "6gkza6k6"
+    "uid": "2Ng3pOWD"
   },
   "model": {
     "status": {
@@ -10,7 +10,7 @@
     },
     "table_data": {
       "name": "yellow_taxi",
-      "uid": "HCubi7wE"
+      "uid": "3Eduwpti"
     },
     "fields": [
       {
@@ -18,11 +18,11 @@
           "status": "raw"
         },
         "names": {
-          "uid": "GFdvAmfI",
+          "uid": "4X8d4Ghd",
           "raw_name": "tpep_pickup_datetime",
           "display_name": "tpep_pickup_datetime",
-          "description_short": "The date and time when the meter was engaged. ",
-          "description_long": null
+          "description_short": "Pickup date and time",
+          "description_long": "Date and time he meter was engaged"
         },
         "types": {
           "pq_type": "int64",
@@ -38,18 +38,18 @@
           {
             "name": "greater_equal",
             "values": {
-              "warning": "2021-06-30T00:00:00",
+              "warning": "2002-12-31T23:07:20",
               "error": ""
             },
-            "enabled": true
+            "enabled": false
           },
           {
             "name": "less_equal",
             "values": {
-              "warning": "2021-08-01T00:00:00",
+              "warning": "2021-08-02T00:04:26",
               "error": ""
             },
-            "enabled": true
+            "enabled": false
           }
         ]
       },
@@ -58,38 +58,48 @@
           "status": "raw"
         },
         "names": {
-          "uid": "KTL4EVOy",
+          "uid": "Gl03KTmP",
           "raw_name": "tpep_dropoff_datetime",
           "display_name": "tpep_dropoff_datetime",
-          "description_short": "The date and time when the meter was engaged.",
-          "description_long": null
+          "description_short": "Dropoff date and time",
+          "description_long": "Date and time he meter was disengaged"
         },
         "types": {
           "pq_type": "int64",
           "logical_type": "timestamp",
           "arrow_type": "int64",
-          "representation": "int64"
+          "representation": "int64",
+          "units": "d"
         },
         "flags": {
           "is_raw": true,
+          "is_pii": false,
+          "is_standardised": false,
+          "is_transformed": false,
+          "is_inherited": false,
+          "is_join": false,
+          "is_key": false,
+          "is_synthetic": false,
+          "is_backfilled": false,
+          "is_categorical": false,
           "is_numeric": true
         },
         "constraints": [
           {
             "name": "greater_equal",
             "values": {
-              "warning": "2021-06-30T00:00:00",
+              "warning": "2003-01-01T13:56:44",
               "error": ""
             },
-            "enabled": true
+            "enabled": false
           },
           {
             "name": "less_equal",
             "values": {
-              "warning": "2021-08-02T00:00:00",
+              "warning": "2021-08-02T00:17:50",
               "error": ""
             },
-            "enabled": true
+            "enabled": false
           }
         ]
       },
@@ -98,20 +108,29 @@
           "status": "raw"
         },
         "names": {
-          "uid": "AqXm4g72",
+          "uid": "I32Agn9m",
           "raw_name": "passenger_count",
           "display_name": "passenger_count",
-          "description_short": "The number of passengers in the vehicle.",
-          "description_long": "The number of passengers in the vehicle. This is a driver-entered value"
+          "description_short": "Number of passengers",
+          "description_long": "The number of passengers in the vehicle"
         },
         "types": {
           "pq_type": "int64",
           "logical_type": "none",
           "arrow_type": "int64",
-          "representation": "int64"
+          "representation": "int64",
+          "units": null
         },
         "flags": {
           "is_raw": true,
+          "is_pii": false,
+          "is_standardised": false,
+          "is_transformed": false,
+          "is_inherited": false,
+          "is_join": false,
+          "is_key": false,
+          "is_synthetic": false,
+          "is_backfilled": false,
           "is_categorical": true,
           "is_numeric": true
         },
@@ -139,28 +158,37 @@
           "status": "raw"
         },
         "names": {
-          "uid": "31Fbusjm",
+          "uid": "NccYCFNY",
           "raw_name": "trip_distance",
           "display_name": "trip_distance",
-          "description_short": "The elapsed trip distance in miles reported by the taximeter.",
-          "description_long": null
+          "description_short": "Trip distance",
+          "description_long": "The elapsed trip distance in miles reported by the taximeter"
         },
         "types": {
           "pq_type": "double",
           "logical_type": "none",
           "arrow_type": "double",
           "representation": "double",
-          "units": "miles"
+          "units": null
         },
         "flags": {
           "is_raw": true,
+          "is_pii": false,
+          "is_standardised": false,
+          "is_transformed": false,
+          "is_inherited": false,
+          "is_join": false,
+          "is_key": false,
+          "is_synthetic": false,
+          "is_backfilled": false,
+          "is_categorical": false,
           "is_numeric": true
         },
         "constraints": [
           {
             "name": "greater_equal",
             "values": {
-              "warning": "0.0",
+              "warning": "-0.0",
               "error": ""
             },
             "enabled": true
@@ -168,10 +196,18 @@
           {
             "name": "less_equal",
             "values": {
-              "warning": "5000.0",
+              "warning": "500",
               "error": ""
             },
             "enabled": true
+          },
+          {
+            "name": "greater_equal",
+            "values": {
+              "warning": "",
+              "error": ""
+            },
+            "enabled": false
           }
         ]
       },
@@ -180,11 +216,11 @@
           "status": "raw"
         },
         "names": {
-          "uid": "EFKYKr7V",
+          "uid": "S5aGRyND",
           "raw_name": "store_and_fwd_flag",
           "display_name": "store_and_fwd_flag",
-          "description_short": "Trip record stored before send.",
-          "description_long": "This flag indicates whether the trip record was held in vehicle\nmemory before sending to the vendor, aka \u201cstore and forward,\u201d\nbecause the vehicle did not have a connection to the server.\nY= store and forward trip\nN= not a store and forward trip"
+          "description_short": "Store and forward flag",
+          "description_long": "This flag indicates whether the trip record was held in vehicle memory before sending to the vendor, aka \u201cstore and forward,\u201d because the vehicle did not have a connection to the server. Y= store and forward trip N= not a store and forward trip"
         },
         "types": {
           "pq_type": "byte_array",
@@ -201,7 +237,7 @@
           {
             "name": "allowed_values",
             "values": {
-              "warning": "Y,N",
+              "warning": "['Y', 'N']",
               "error": ""
             },
             "enabled": true
@@ -213,11 +249,11 @@
           "status": "raw"
         },
         "names": {
-          "uid": "Jdp5M2Ae",
+          "uid": "2rFL55qG",
           "raw_name": "PULocationID",
           "display_name": "PULocationID",
-          "description_short": "TLC Taxi Zone in which the taximeter was engaged",
-          "description_long": null
+          "description_short": "Pickup location ID",
+          "description_long": "TLC Taxi Zone in which the taximeter was engaged"
         },
         "types": {
           "pq_type": "int64",
@@ -262,18 +298,17 @@
           "status": "raw"
         },
         "names": {
-          "uid": "6FSRGaED",
+          "uid": "PVSZ4EWY",
           "raw_name": "DOLocationID",
           "display_name": "DOLocationID",
-          "description_short": "TLC Taxi Zone in which the taximeter was disengaged",
-          "description_long": null
+          "description_short": "Dropoff Location ID",
+          "description_long": "TLC Taxi Zone in which the taximeter was disengaged"
         },
         "types": {
           "pq_type": "int64",
           "logical_type": "none",
           "arrow_type": "int64",
-          "representation": "int64",
-          "units": null
+          "representation": "int64"
         },
         "flags": {
           "is_raw": true,
@@ -312,18 +347,17 @@
           "status": "raw"
         },
         "names": {
-          "uid": "Ndkgm70m",
+          "uid": "OGW2EPSI",
           "raw_name": "payment_type",
           "display_name": "payment_type",
-          "description_short": "A numeric code signifying how the passenger paid for the trip. ",
+          "description_short": "Payment type",
           "description_long": "A numeric code signifying how the passenger paid for the trip. 1= Credit card 2= Cash 3= No charge 4= Dispute 5= Unknown 6= Voided trip"
         },
         "types": {
           "pq_type": "int64",
           "logical_type": "none",
           "arrow_type": "int64",
-          "representation": "int64",
-          "units": "miles"
+          "representation": "int64"
         },
         "flags": {
           "is_raw": true,
@@ -354,10 +388,10 @@
           "status": "raw"
         },
         "names": {
-          "uid": "CgGPUEsi",
+          "uid": "7w7rQQjX",
           "raw_name": "fare_amount",
           "display_name": "fare_amount",
-          "description_short": null,
+          "description_short": "Fare amount",
           "description_long": "The time-and-distance fare calculated by the meter."
         },
         "types": {
@@ -369,21 +403,30 @@
         },
         "flags": {
           "is_raw": true,
+          "is_pii": false,
+          "is_standardised": false,
+          "is_transformed": false,
+          "is_inherited": false,
+          "is_join": false,
+          "is_key": false,
+          "is_synthetic": false,
+          "is_backfilled": false,
+          "is_categorical": false,
           "is_numeric": true
         },
         "constraints": [
           {
             "name": "greater_equal",
             "values": {
-              "warning": "0.0",
+              "warning": "0",
               "error": ""
             },
-            "enabled": true
+            "enabled": false
           },
           {
             "name": "less_equal",
             "values": {
-              "warning": "1500.0",
+              "warning": "2000",
               "error": ""
             },
             "enabled": true

@@ -48,9 +48,9 @@ class Ingestion(object):
         valid['ingestion'] = ingestion
         valid['uid'] = ingestion_uid
         out_base = f'{ingestion}_{dataset_uid}_{ingestion_uid}'
-        out_parquet = f'{self.dirs["valid_dir"]}/part_{self.part:04}_{out_base}.parquet'
+        out_parquet = f'{self.dirs["ingested_dir"]}/part_{self.part:04}_{out_base}.parquet'
         self.part += 10
-        shutil.copy(self.working_file, out_parquet)
+        shutil.move(self.working_file, out_parquet)
         hash = get_hash(out_parquet)
         valid['sha256_hash'] = hash
         valid['parquet_file'] = out_parquet

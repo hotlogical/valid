@@ -3,7 +3,7 @@ import pyarrow.parquet as pq
 from datatools import load_dataset_schema, get_datasets, get_row_data
 from constraints_arrow import check_constraint
 
-class Validation(object):
+getclass Validation(object):
 
     def __init__(self, dataset_name, schema):
         self.dataset_name = dataset_name
@@ -17,20 +17,22 @@ class Validation(object):
         self.valid['table'] = {}
         # get the table
         self.validate_table_columns()
-        data_table = pq.read_table(self.pq_filename)
+        # data_table = pq.read_table(self.pq_filename)
         pq_metadata = get_row_data(self.pq_filename, self.schema_cols, dotmap=True)
         table = self.valid['table']
         table_level = table['column_name_level']
         table['num_rows'] = pq_metadata.num_rows
         table['column_checks'] = {}
         column_checks = table['column_checks']
-        for i, c in enumerate(self.schema_cols):
+        for i, column_name in enumerate(self.schema_cols):
             #print(' ')
-            print(f'{c}, ')
-            j = self.data_cols.index(c)
-            column_checks[c] = self.validate_column(i, data_table.column(j).combine_chunks(),
-                                                    pq_metadata['fields'][c], self.schema.model.fields[i])
-            table_level = max(table_level, column_checks[c]['column_level'])
+            print(f'{column_name}, ')
+            j = self.data_cols.index(column_name)
+            data_table = pq.read_table(self.pq_filename, columns=[column_name])
+            data_table_column = data_table.column(0)
+            column_checks[column_name] = self.validate_column(i, data_table_column.combine_chunks(),
+                                                    pq_metadata['fields'][column_name], self.schema.model.fields[i])
+            table_level = max(table_level, column_checks[column_name]['column_level'])
         table['table_level'] = table_level
         return table_level
 
@@ -63,6 +65,8 @@ class Validation(object):
         constraint_results = []
         constraint_level = 0
         for cons in schema.constraints:
+            if cons.enabled != True:
+                continue
             cons_level, cons_result = check_constraint(pa_col, cons)
             constraint_level = max(constraint_level, cons_level)
             constraint_results.append(cons_result)
@@ -71,8 +75,6 @@ class Validation(object):
         column_level = max(column_level, constraint_level)
         column_check['column_level'] = column_level
         return column_check
-
-
 
 
     def validate_table_columns(self):
@@ -133,13 +135,19 @@ class Validation(object):
 
 if __name__ == '__main__':
     dataset_name = 'yellow_taxi'
-    ingestion = '2021-06'
+    ingestion = '2021-07'
     ds_data = get_datasets().datasets[dataset_name]
-    work_path = f'data/{dataset_name}/'
+    work_path = f'data/{dataset_name}/raw/'
     pq_filename = work_path + ds_data.pattern.replace('{x}', ingestion) + '.parquet'
     schema = load_dataset_schema(dataset_name)
     vd = Validation(dataset_name, schema)
     valid = vd.validate(pq_filename)
-    with open(f'data/{dataset_name}/valid/valid.json', 'w') as fh:
+    with open(f'data/{dataset_name}/valid.json', 'w') as fh:
         json.dump(valid, fh, indent=2)
     #print(valid)
+
+"""
+Automate - where possible
+Inspect - where necessary
+Expose - where requested
+"""
