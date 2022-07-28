@@ -43,6 +43,7 @@ datasets:
         url: "https://s3.amazonaws.com/nyc-tlc/misc/taxi+_zone_{x}.csv"
         pattern: taxi+_zone_{x}
         file_type: csv
+        update: replace
         default_ingestion: lookup
         uppdate: replace
         ingestions:
@@ -57,7 +58,7 @@ datasets:
         update: append
         default_ingestion: "202107"
         ingestions:
-          - 202107
+          - "202107"
   flight_radar24:
     dataset_type: Tabular
     tables:
@@ -124,8 +125,9 @@ datasets:
         null_values: ["*"]
         timestamp_parsers: ["%Y%m%d%H%M"]
         update: append
-        default_ingestion: 2022.05
+        default_ingestion: all
         ingestions:
+          - all
           - 2022.01
           - 2022.02
           - 2022.03

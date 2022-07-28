@@ -290,7 +290,7 @@ def get_row_data(parquet_file, selcols, dotmap=False):
 
 def setcolmetadata(pt, n, section, mdict, parquet_file=None):
     # Set arrow/parquet metadata for a particular column
-    st = pt.schema
+    st = pt.metadata
     sfields = [st.field(i) for i in range(len(st))]  # Make a copy of the old (immutable) fields
     oldmd = st.field(n).metadata  # Save old metadata from field we are modifying
     if oldmd is None:
@@ -314,7 +314,7 @@ def setcolmetadata(pt, n, section, mdict, parquet_file=None):
 
 def readcolmetadata(pt, n, section=None):
     # Get the column metadata from arrow/parquet schema
-    md = pt.schema.field(n).metadata
+    md = pt.metadata.field(n).metadata
     if md is None:  # Column has no metadata
         return {}
     if b'caspian' not in md:

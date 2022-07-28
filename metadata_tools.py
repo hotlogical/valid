@@ -3,7 +3,7 @@ import metadata_definition as md
 import pyarrow.parquet as pq
 from UID import UID
 
-numeric = 'int64 double'.split()
+numeric = 'int int8 int16 int32 int64 uint uint8 uint16 uint32 uint64 float float16 float32 float64 double'.split()
 logical = 'timestamp string'.split()
 dataroot = Path.home() / 'data'
 
@@ -36,7 +36,7 @@ def minimal_column(column, raw_name):
     # print(sts.logical_type)
     logical_type = stats.logical_type.type.lower() if stats.logical_type.type != '' else parquet_type
     status = md.Status(status='raw')
-    field_types = md.ColumnTypes(pq_type=parquet_type, logical_type=logical_type, arrow_type=parquet_type,
+    field_types = md.ColumnTypes(parquet_type=parquet_type, logical_type=logical_type, arrow_type=parquet_type,
                                  representation=parquet_type)
     is_numeric = parquet_type in numeric
     field_flags = md.ColumnFlags(is_raw=True, is_numeric=is_numeric)

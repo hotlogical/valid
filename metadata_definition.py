@@ -15,7 +15,7 @@ class ColumnNames(BaseModel):
 
 class ColumnTypes(BaseModel):
     # Types section of DataField
-    pq_type: str
+    parquet_type: str
     logical_type: Optional[str]
     arrow_type: Optional[str]
     representation: Optional[str]

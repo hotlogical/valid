@@ -2,7 +2,7 @@ import json
 import jsonschema
 import streamlit as st
 import pyarrow.dataset as ds
-from datatools import load_data, get_datasets, get_row_data, get_metadata, get_file_info, get_n_rows_to_df, parquet_from_yaml, get_table_file
+from datatools import load_data, get_datasets, get_row_data, get_metadata, get_file_info, get_n_rows_to_df, parquet_from_yaml, get_table_file, dataroot
 from destools import make_fields, dtypcol, colbox, coldict, make_table
 
 # Must be first command executed
@@ -97,7 +97,10 @@ if tab == 'Tables':
     with ccols[3]:
         fi = file_info
         mdi = metadata.model.tables[table].table_info
-        coldict({'Name': table_name, 'UpdateType': table_info['update'], 'UID': mdi.uid})
+        # Get raw metadata from the parquet file
+        row_data = get_row_data(file_info.parquet, file_info.columns)
+        coldict({'Name': table_name, 'UpdateType': table_info['update'], 'NumRowGroups': row_data['num_row_groups'],
+                 'UID': mdi.uid})
         coldict({f'{fi.pq_num_rows:,}': 'rows', fi.pq_num_cols: 'columns', 'On disk': f'{fi.csv_size:.1f} MB (raw)',
                  f'{fi.parquet_size:.1f}': 'MB (parquet)', f'{fi.mem_size:.1f}': 'MB (arrow)'}, 'Grey', 'Grey')
 
@@ -107,9 +110,7 @@ if tab == 'Tables':
     metadata = make_fields(row_data['fields'], file_info.parquet, metadata, table_name)
 
 st.markdown('---')
-st.write(metadata.dict())
 
-exit(0)
 
 # Validate and show schema
 colbox('Schema', 'Green')
@@ -117,7 +118,8 @@ st.write("![ready](https://img.shields.io/static/v1?label=Status&message=Complet
 # scj = generate_schema(parquet_file)
 if metadata is not None:
     st.write(metadata.dict())
-    with open(f'schemas/{dataset_name}.schema.json', 'w') as fh:
+    metadata_file = dataroot / dataset_name / 'metadata' / f'{dataset_name}.metadata.json'
+    with metadata_file.open('w') as fh:
         fh.write(metadata.json(indent=2, exclude_unset=True))
     # validate schema
     # metaschema = json.load(open('schemas/caspian_metaschema.json'))

@@ -156,18 +156,19 @@ def make_time_stats(field_data, fa):
         # st.image('graph.png')
 
 
-def make_field_stats(i, field_data, pt, schema):
+def make_field_stats(i, field_data, pt, metadata, table_name):
     # Make different stats depending on field type
     fa = pt.column(0)
     if field_data['logical'].startswith('TIMESTAMP'):
-        make_time_stats(field_data, fa)  # Special for datatimes
+        make_time_stats(field_data, fa)  # Special for datetimes
         return
     vc = pc.value_counts(fa)
-    cat = schema.model.columns[i].flags.is_categorical
-    numeric = schema.model.columns[i].flags.is_numeric
+    mdmt = metadata.model.tables[table_name]
+    cat = mdmt.columns[i].flags.is_categorical
+    numeric = mdmt.columns[i].flags.is_numeric
     if cat is None and len(vc) < 30:
         cat = True
-        schema.model.columns[i].flags.is_categorical = True
+        mdmt.columns[i].flags.is_categorical = True
     # if len(vc) < 500:
     if cat:
         make_category_stats(field_data, vc, numeric)  # Categorical data
@@ -175,10 +176,11 @@ def make_field_stats(i, field_data, pt, schema):
         make_numeric_stats(field_data, fa)  # Numeric data
 
 
-def make_names_section(i, section, fdict, parquet_file, schema):
+def make_names_section(i, section, fdict, parquet_file, metadata, table_name):
     fields = fdict[section]
     # oldvalues = readcolmetadata(pt, i, section)
-    oldvalues = getattr(schema.model.columns[i], section).dict()
+    mdmt = metadata.model.tables[table_name]
+    oldvalues = getattr(mdmt.columns[i], section).dict()
     response = {}
     with st.form(f"form_{section}"):
         colbox(section, 'Green')
@@ -197,31 +199,32 @@ def make_names_section(i, section, fdict, parquet_file, schema):
         submitted = st.form_submit_button("Save")
         if submitted:
             st.write('Writing schema changes to ', parquet_file)
-            setattr(schema.model.columns[i], section, sections[section](**response))
+            setattr(mdmt.columns[i], section, sections[section](**response))
             # pt = setcolmetadata(pt, i, section, response, parquet_file)
-        return schema
+        return metadata
 
 
-def make_names_types_flags_form(i, parquet_file, schema):
+def make_names_types_flags_form(i, parquet_file, metadata, table_name):
     fdict = gm.field_dict()
     form_sections = 'names types flags'.split()
     cols = st.columns((2., 2., 2.))
     for k, section in enumerate(form_sections):
         with cols[k]:
-            schema = make_names_section(i, section, fdict, parquet_file, schema)
-    return schema
+            metadata = make_names_section(i, section, fdict, parquet_file, metadata, table_name)
+    return metadata
 
-def make_constraints_form(n, field_data, parquet_file, schema):
+def make_constraints_form(n, field_data, parquet_file, metadata, table_name):
     field = field_data['field_name']
     # clist = 'greater_equal less_equal'.split()
-    clist = type_constraints(schema.model.columns[n].types.parquet_type, all_constraints)
+    mdmt = metadata.model.tables[table_name]
+    clist = type_constraints(mdmt.columns[n].types.parquet_type, all_constraints)
     cols = 'constraint 2 warning 2 error 2 enabled 1 delete 1 . 1'.split()
     cols = {cols[i]: float(cols[i + 1]) for i in range(0, len(cols), 2)}
     # inps = [st.selectbox, st.text_input, st.text_input, st.checkbox, st.checkbox]
     # oldvalues = readcolmetadata2(parquet_file, n, 'constraints')
     # cons = [] if oldvalues == {} else oldvalues
     # st.write('oldvalues ', cons)
-    oldvalues = schema.model.columns[n].constraints
+    oldvalues = mdmt.columns[n].constraints
     cons = [] if oldvalues is None else [c.dict() for c in oldvalues]
     # st.write('cons ', newcons)
 
@@ -276,31 +279,31 @@ def make_constraints_form(n, field_data, parquet_file, schema):
         # st.write('newcons ', newcons)
         submitted = st.form_submit_button("Save")
         if addconstraint or submitted:
-            schema.model.columns[n].constraints = [gm.Constraint(**c) for c in newcons]
+            mdmt.columns[n].constraints = [gm.Constraint(**c) for c in newcons]
             # pt = setcolmetadata(pt, n, 'constraints', newcons, parquet_file)
             st.write('Writing schema changes to ', parquet_file)
-    return schema
+    return metadata
 
 
-def make_field_content(i, field_data, parquet_file, schema):
+def make_field_content(i, field_data, parquet_file, metadata, table_name):
     pt = read_parquet(parquet_file, [field_data['field_name']])
     st.write('<style>div.row-widget.stRadio > div{flex-direction:row;} </style>',
              unsafe_allow_html=True)
     tab = st.radio('', ['Distribution', 'Statistics .', 'Names Types Flags  .', 'Constraints .',
                         'Transforms / Standardizations'])
     if tab == 'Distribution':  # Show graph of data and some stats
-        make_field_stats(i, field_data, pt, schema)
+        make_field_stats(i, field_data, pt, metadata, table_name)
     if tab == 'Statistics .':  # Further stats
         df = pt.column(0).to_pandas().describe(include='all')
         st.write(df)
     if tab == 'Names Types Flags  .':  # Form to enter schema details
-        schema = make_names_types_flags_form(i, parquet_file, schema)
+        metadata = make_names_types_flags_form(i, parquet_file, metadata, table_name)
     if tab == 'Constraints .':  # Form to enter constraint details
-        schema = make_constraints_form(i, field_data, parquet_file, schema)
+        metadata = make_constraints_form(i, field_data, parquet_file, metadata, table_name)
     if tab == 'Transforms Standardizations':
         pass
     st.markdown('---')
-    return schema
+    return metadata
 
 
 def close_other_fields(fkey, field_data):
@@ -339,7 +342,7 @@ def make_field_row(r, field_data, cols, parquet_file, metadata, table_name):
                     st.text(field_data[col])
         if showfield:
             # Then the details
-            metadata = make_field_content(r, field_data, parquet_file, metadata)
+            metadata = make_field_content(r, field_data, parquet_file, metadata, table_name)
     return metadata
 
 
