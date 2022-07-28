@@ -1,5 +1,6 @@
 import os
 import glob
+from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict
 import hashlib
@@ -7,12 +8,15 @@ import json
 import yaml
 import pyarrow as pa
 import pyarrow.parquet as pq
-import pyarrow.csv as csv
+import pyarrow.csv as pa_csv
 from dotmap import DotMap
-import generate_metaschema as gm
-import schema_tools as stls
+import metadata_definition as md
+import metadata_tools as stls
 import jsonschema
 import streamlit as st
+from arrow_types import arrow_types
+
+dataroot = Path.home() / 'data'
 
 @dataclass
 class FileInfo:
@@ -40,9 +44,16 @@ class FileInfo:
 
 
 @st.experimental_memo
-def get_file_info(dataset_name, dataurl, columns=None):
-    csv_filename = f'data/{dataset_name}/raw/' + dataurl.split('/')[-1]
-    parquet_filename = csv_filename.replace('csv', 'parquet')
+def get_file_info(dataset_name, table_name, dataurl, columns=None):
+    #csv_filename = f'data/{dataset_name}/raw/' + dataurl.split('/')[-1]
+    #parquet_filename = csv_filename.replace('csv', 'parquet')
+
+    dataset_dir = dataroot / dataset_name
+    table_dir = dataset_dir / 'raw' / table_name
+    # dataurl = table_info.url.replace('{x}', str(table_info.default_ingestion))
+    csv_filename = table_dir / dataurl.split('/')[-1]
+    parquet_filename = csv_filename.with_suffix('.parquet')
+
     file_info = FileInfo(dataurl, csv_filename, parquet_filename, columns=columns)
     file_info.get_csv_size()
     file_info.get_mem_size()
@@ -79,28 +90,117 @@ def get_n_rows_to_df(pq_filename, num_rows=10):
     return df
 
 def csv_to_parquet(csv_filename, pq_filename, select_columns=None, data_types=None):
-    convert_options = csv.ConvertOptions(column_types=data_types, include_columns=select_columns)
-    pt = csv.read_csv(csv_filename, convert_options=convert_options)
+    convert_options = pa_csv.ConvertOptions(column_types=data_types, include_columns=select_columns)
+    pt = pa_csv.read_csv(csv_filename, convert_options=convert_options)
     pq.write_table(pt, pq_filename, version='2.6', compression='none')
     mem_size = pt.nbytes / 1000000
     return mem_size
 
+@dataclass
+class CSVHandler:
+    csv_file: str
+    pq_file: Optional[str] = None
+    delimiter: Optional[str] = None
+    null_values: Optional[List[str]] = field(default_factory=lambda: None)
+    column_names: Optional[List[str]] = field(default_factory=lambda: None)
+    column_types: Optional[Dict[str, str]] = field(default_factory=lambda: None)
+    timestamp_parsers: Optional[List[str]] = field(default_factory=lambda: None)
+    include_columns: Optional[List[str]] = field(default_factory=lambda: None)
+    safe: bool = True
+    def read_csv(self):
+        parse_ops = {}
+        read_ops = {}
+        convert_ops = {}
+        if self.delimiter is not None:
+            parse_ops['delimiter'] = self.delimiter
+        if self.column_names is not None:
+            read_ops['column_names'] = self.column_names
+        if self.null_values is not None:
+            convert_ops['null_values'] = self.null_values
+        new_types = {}
+        if self.column_types is not None:
+            new_types = {c: arrow_types[self.column_types[c]] for c in self.column_types}
+        if self.timestamp_parsers is not None:
+            convert_ops['timestamp_parsers'] = self.timestamp_parsers
+        if self.include_columns is not None:
+            convert_ops['include_columns'] = self.include_columns
+        all_ops = {}
+        if len(parse_ops) > 0:
+            all_ops['parse_options'] = pa_csv.ParseOptions(**parse_ops)
+        if len(read_ops) > 0:
+            all_ops['read_options'] = pa_csv.ReadOptions(**read_ops)
+        if len(convert_ops) > 0:
+            all_ops['convert_options'] = pa_csv.ConvertOptions(**convert_ops)
+        self.pt = pa_csv.read_csv(self.csv_file, **all_ops)
+        # Now convert any mis-inferred field types (must be a nicer way of doing this)
+        if len(new_types) > 0:
+            new_schema = []
+            for f in self.pt.schema:
+                if f.name in self.column_types.keys():
+                    new_schema.append(pa.field(f.name, new_types[f.name]))
+                else:
+                    new_schema.append(pa.field(f.name, f.type))
+            new_schema = pa.schema(new_schema)
+            self.pt = self.pt.cast(new_schema, safe=self.safe)  # TODO Not sure how unsafe this is !
+        print(self.pt.schema)
+        return self.pt
+    def write_parquet(self, pq_file, version='2.6', compression='none'):
+        pq.write_table(self.pt, pq_file, version=version, compression=compression)
 
-def get_schema(dataset_name, pq_filename, select_columns=None):
-    schema_path = f'schemas/{dataset_name}.schema.json'
-    if not os.path.exists(schema_path):  # Generate minimal schema if no schema exists yet
-        schema = stls.minimal_table(dataset_name, pq_filename, select_columns)
-        with open(f'schemas/{dataset_name}.schema.json', 'w') as f:
-            f.write(schema.json(indent=2, exclude_unset=True))
-    return load_dataset_schema(dataset_name)
+def parquet_from_yaml(dataset_name, ds_data):
+    ds_info = ds_data.datasets[dataset_name]
+    dataset_dir = dataroot / dataset_name
+    for table in ds_info.tables:
+        table_info = ds_info.tables[table]
+        file_type = table_info.file_type
+        if file_type != 'csv':
+            print('file_type for table %s is not csv' % table)
+            continue
+        table_dir = dataset_dir / 'raw' / table
+        dataurl = table_info.url.replace('{x}', str(table_info.default_ingestion))
+        table_csv = table_dir / dataurl.split('/')[-1]
+        table_parquet = table_csv.with_suffix('.parquet')
+        if table_parquet.exists():
+            continue
+        csv_ops = {}
+        fields = 'column_names include_columns column_types delimiter null_values timestamp_parsers safe'.split()
+        for f in fields:
+            if f in table_info:
+                csv_ops[f] = table_info[f]
+        ch = CSVHandler(table_csv, **csv_ops)
+        ch.read_csv()
+        ch.write_parquet(table_parquet)
+
+def get_table_file(dataset_name, table, table_info):
+    dataset_dir = dataroot / dataset_name
+    table_dir = dataset_dir / 'raw' / table
+    dataurl = table_info.url.replace('{x}', str(table_info.default_ingestion))
+    table_csv = table_dir / dataurl.split('/')[-1]
+    table_parquet = table_csv.with_suffix('.parquet')
+    return table_parquet
 
 
-def load_dataset_schema(dataset_name):
-    schema_path = f'schemas/{dataset_name}.schema.json'
-    with open(schema_path, 'r') as fh:  # Load the schema
-        schema = json.load(fh)
-        schema = gm.CaspianSchema(**schema)
-    return schema
+def parquet_from_metadata(table_metadata):
+    pass
+
+
+def get_metadata(dataset_name, ds_info):
+    dataset_dir = dataroot / dataset_name
+    metadata_path = dataset_dir / 'metadata' / f'{dataset_name}.metadata.json'
+    if not metadata_path.exists():  # Generate minimal metadata if no metadata exists yet
+        metadata = stls.minimal_metadata(dataset_name, ds_info)
+        with metadata_path.open('w') as f:
+            f.write(metadata.json(indent=2, exclude_unset=True))
+    return load_dataset_metadata(dataset_name)
+
+
+def load_dataset_metadata(dataset_name):
+    dataset_dir = dataroot / dataset_name
+    metadata_path = dataset_dir / 'metadata' / f'{dataset_name}.metadata.json'
+    with metadata_path.open('r') as fh:  # Load the metadata
+        metadata = json.load(fh)
+        metadata = md.MetadataDefinition(**metadata)
+    return metadata
 
 
 def get_datasets():
@@ -257,10 +357,10 @@ def generate_schema(parquet_file):
         fields.append(mdata)
     if len(fields) == 0:
         return None  # Found no metadata
-    data_set = gm.DataSetData(name='yellow_taxi', uid='zzzzzzzz', datatype='Tabular')
-    table_data = gm.TableData(name='yellow_taxi', uid='aaaaaaaa')
-    tabular = gm.Tabular(tabledata=table_data, fields=fields)
-    schema = gm.CaspianSchema(dataset=data_set, model=tabular)
+    data_set = md.DataSetData(name='yellow_taxi', uid='zzzzzzzz', datatype='Tabular')
+    table_data = md.TableInfo(name='yellow_taxi', uid='aaaaaaaa')
+    tabular = md.DataTable(tabledata=table_data, columns=fields)
+    schema = md.MetadataDefinition(dataset=data_set, model=tabular)
     # validate schema
     metaschema = json.load(open('schemas/caspian_metaschema.json'))
     jsonschema.validate(schema, metaschema)
@@ -282,3 +382,18 @@ def get_validation_data(dataset_name):
         validations[val_data['ingestion']] = val_data
     return validations
     # Fill structure of validation data
+
+if __name__ == '__main__':
+    #pt = read_csv('data/custom_weather/test_locations.csv', 'poo', delimiter='|',
+    #              column_names='station_id station_name region_code country_ISO2 latitude longitude timezone altitude nothing'.split(),
+    #              include_columns='station_id station_name region_code country_ISO2 latitude longitude timezone altitude'.split(),
+    #              column_types={'altitude': 'int32'})
+    ch = CSVHandler('data/custom_weather/test_locations.csv', delimiter='|',
+                    column_names='station_id station_name region_code country_ISO2 latitude longitude timezone altitude nothing'.split(),
+                    include_columns='station_id station_name region_code country_ISO2 latitude longitude timezone altitude'.split(),
+                    column_types={'altitude': 'int32'})
+    print(ch.csv_file)
+    print(ch.delimiter)
+    pt = ch.read_csv()
+    print(pt.schema)
+    print(pt.to_pandas().head(5))

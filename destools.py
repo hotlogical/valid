@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import pyarrow.compute as pc
 #  import jsonschema
-import generate_metaschema as gm
+import metadata_definition as gm
 import proot
 from datatools import get_constraints, type_constraints, read_parquet  # , setcolmetadata, readcolmetadata, readcolmetadata2
 import streamlit.components.v1 as components
@@ -13,7 +13,7 @@ import streamlit.components.v1 as components
 pr = proot.pROOT(True, True)
 c2 = pr.createCanvas('c2', inline=True, width=800, height=800)
 
-sections = {'names': gm.FieldNames, 'types': gm.FieldTypes, 'flags': gm.FieldFlags}
+sections = {'names': gm.ColumnNames, 'types': gm.ColumnTypes, 'flags': gm.ColumnFlags}
 dtypes = 'float double int32 int64 int96 byte_array timestamp'.split()
 hide_table_row_index = "<style>tbody th {display:none}.blank {display:none}</style>"
 hide_dataframe_row_index = "<style>.row_heading.level0 {display:none}.blank {display:none}</style>"
@@ -163,11 +163,11 @@ def make_field_stats(i, field_data, pt, schema):
         make_time_stats(field_data, fa)  # Special for datatimes
         return
     vc = pc.value_counts(fa)
-    cat = schema.model.fields[i].flags.is_categorical
-    numeric = schema.model.fields[i].flags.is_numeric
+    cat = schema.model.columns[i].flags.is_categorical
+    numeric = schema.model.columns[i].flags.is_numeric
     if cat is None and len(vc) < 30:
         cat = True
-        schema.model.fields[i].flags.is_categorical = True
+        schema.model.columns[i].flags.is_categorical = True
     # if len(vc) < 500:
     if cat:
         make_category_stats(field_data, vc, numeric)  # Categorical data
@@ -178,7 +178,7 @@ def make_field_stats(i, field_data, pt, schema):
 def make_names_section(i, section, fdict, parquet_file, schema):
     fields = fdict[section]
     # oldvalues = readcolmetadata(pt, i, section)
-    oldvalues = getattr(schema.model.fields[i], section).dict()
+    oldvalues = getattr(schema.model.columns[i], section).dict()
     response = {}
     with st.form(f"form_{section}"):
         colbox(section, 'Green')
@@ -197,7 +197,7 @@ def make_names_section(i, section, fdict, parquet_file, schema):
         submitted = st.form_submit_button("Save")
         if submitted:
             st.write('Writing schema changes to ', parquet_file)
-            setattr(schema.model.fields[i], section, sections[section](**response))
+            setattr(schema.model.columns[i], section, sections[section](**response))
             # pt = setcolmetadata(pt, i, section, response, parquet_file)
         return schema
 
@@ -214,14 +214,14 @@ def make_names_types_flags_form(i, parquet_file, schema):
 def make_constraints_form(n, field_data, parquet_file, schema):
     field = field_data['field_name']
     # clist = 'greater_equal less_equal'.split()
-    clist = type_constraints(schema.model.fields[n].types.pq_type, all_constraints)
+    clist = type_constraints(schema.model.columns[n].types.parquet_type, all_constraints)
     cols = 'constraint 2 warning 2 error 2 enabled 1 delete 1 . 1'.split()
     cols = {cols[i]: float(cols[i + 1]) for i in range(0, len(cols), 2)}
     # inps = [st.selectbox, st.text_input, st.text_input, st.checkbox, st.checkbox]
     # oldvalues = readcolmetadata2(parquet_file, n, 'constraints')
     # cons = [] if oldvalues == {} else oldvalues
     # st.write('oldvalues ', cons)
-    oldvalues = schema.model.fields[n].constraints
+    oldvalues = schema.model.columns[n].constraints
     cons = [] if oldvalues is None else [c.dict() for c in oldvalues]
     # st.write('cons ', newcons)
 
@@ -276,7 +276,7 @@ def make_constraints_form(n, field_data, parquet_file, schema):
         # st.write('newcons ', newcons)
         submitted = st.form_submit_button("Save")
         if addconstraint or submitted:
-            schema.model.fields[n].constraints = [gm.Constraint(**c) for c in newcons]
+            schema.model.columns[n].constraints = [gm.Constraint(**c) for c in newcons]
             # pt = setcolmetadata(pt, n, 'constraints', newcons, parquet_file)
             st.write('Writing schema changes to ', parquet_file)
     return schema
@@ -313,7 +313,7 @@ def close_other_fields(fkey, field_data):
                 st.session_state[thisfkey] = False
 
 
-def make_field_row(r, field_data, cols, parquet_file, schema):
+def make_field_row(r, field_data, cols, parquet_file, metadata, table_name):
     # First the row containing the parquet metadata
     allfielddata = field_data
     field_data = field_data[list(field_data.keys())[r]]
@@ -339,11 +339,11 @@ def make_field_row(r, field_data, cols, parquet_file, schema):
                     st.text(field_data[col])
         if showfield:
             # Then the details
-            schema = make_field_content(r, field_data, parquet_file, schema)
-    return schema
+            metadata = make_field_content(r, field_data, parquet_file, metadata)
+    return metadata
 
 
-def make_fields(field_data, parquet_file, schema):
+def make_fields(field_data, parquet_file, metadata, table_name):
     # Main loop to generate each field
 
     # Format the headers for the field sections
@@ -353,8 +353,8 @@ def make_fields(field_data, parquet_file, schema):
     # Make the individual data field sections
     make_data_header(cols)
     for i, fd in enumerate(field_data):
-        schema = make_field_row(i, field_data, cols, parquet_file, schema)
-    return schema
+        metadata = make_field_row(i, field_data, cols, parquet_file, metadata, table_name)
+    return metadata
 
 
 def make_table(field_data, pt):

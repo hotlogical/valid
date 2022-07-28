@@ -6,7 +6,7 @@ import pandas as pd
 from dotmap import DotMap
 from valtools import validate_column_names, make_columns, make_ingestions, make_num_row_graph, dtypcol
 from destools import coldict
-from datatools import load_dataset_schema, get_datasets, get_validation_data, get_n_rows_to_df
+from datatools import load_dataset_metadata, get_datasets, get_validation_data, get_n_rows_to_df
 
 # Streamlit setup
 st.set_page_config(page_title="Asset validation", page_icon="🔑", layout="wide")
@@ -23,8 +23,8 @@ ingestion = '2021-07'
 col_map = {0: 'Green', 1: 'Orange', 2: 'Red'}
 
 # Read Schema
-schema = load_dataset_schema(dataset_name)
-schema_cols = [schema.model.fields[i].names.raw_name for i in range(len(schema.model.fields))]
+schema = load_dataset_metadata(dataset_name)
+schema_cols = [schema.model.columns[i].names.raw_name for i in range(len(schema.model.columns))]
 num_schema_cols = len(schema_cols)
 
 ds_data = get_datasets().datasets[dataset_name]

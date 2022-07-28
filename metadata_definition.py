@@ -5,7 +5,7 @@ import jsonschema
 
 # Generate Caspian Meta-Schema
 
-class FieldNames(BaseModel):
+class ColumnNames(BaseModel):
     # Names section of DataField
     uid: str
     raw_name: str
@@ -13,7 +13,7 @@ class FieldNames(BaseModel):
     description_short: Optional[str]
     description_long: Optional[str]
 
-class FieldTypes(BaseModel):
+class ColumnTypes(BaseModel):
     # Types section of DataField
     pq_type: str
     logical_type: Optional[str]
@@ -21,7 +21,7 @@ class FieldTypes(BaseModel):
     representation: Optional[str]
     units: Optional[str]
 
-class FieldFlags(BaseModel):
+class ColumnFlags(BaseModel):
     # Flags section of DataField
     is_raw: Optional[bool]
     is_pii: Optional[bool]
@@ -41,8 +41,8 @@ class Transforms(BaseModel):
     miles_to_km: Optional[Callable]
     latlon_to_H3: Optional[Callable]
 
-class FieldTransforms(BaseModel):
-    # Transforms section of DataField - a list of Transforms
+class ColumnTransforms(BaseModel):
+    # Transforms section of DataColumn - a list of Transforms
     transforms: Optional[List[Transforms]]
 
 class Constraint(BaseModel):
@@ -54,32 +54,52 @@ class Constraint(BaseModel):
 class Status(BaseModel):
     status: str
 
-class DataField(BaseModel):
+class DataColumn(BaseModel):
     status: Optional[Status]
-    names: FieldNames
-    types: FieldTypes
-    flags: Optional[FieldFlags]
-    #transforms: Optional[FieldTransforms]
+    names: ColumnNames
+    types: ColumnTypes
+    flags: Optional[ColumnFlags]
+    # transforms: Optional[FieldTransforms]
     constraints: Optional[List[Constraint]]
 
-class TableData(BaseModel):
+class DecodeInfo(BaseModel):
+    file_type: str
+    delimiter: str = ','
+    null_values: Optional[List[str]]
+    column_names: Optional[List[str]]
+    include_columns: Optional[List[str]]
+    column_types: Optional[Dict[str, str]]
+    timestamp_parsers: Optional[List[str]]
+    safe: str = True
+
+class TableInfo(BaseModel):
     # Table metadata
     name: str
     uid: str
+    decodeinfo: Optional[DecodeInfo]
 
 class DataSetData(BaseModel):
     name: str
     datatype: str
     uid: str
 
-class Tabular(BaseModel):
+class DataTable(BaseModel):
     status: Optional[Status]
-    table_data: Optional[TableData]
-    fields: Optional[List[DataField]]
+    table_info: Optional[TableInfo]
+    columns: List[DataColumn]
     table_constraints: Optional[List[Constraint]]
 
-class Relational(BaseModel):
-    relational: List[Tabular]
+class TableColumn(BaseModel):
+    table: str
+    column: str
+
+class TableRelations(BaseModel):
+    values: Dict[TableColumn, TableColumn]
+
+class Tabular(BaseModel):
+    status: Optional[Status]
+    tables: Dict[str, DataTable]
+    relations: Optional[List[TableRelations]]
 
 class Graph(BaseModel):
     name: str
@@ -87,7 +107,7 @@ class Graph(BaseModel):
 class Nested(BaseModel):
     name: str
 
-class CaspianSchema(BaseModel):
+class MetadataDefinition(BaseModel):
     """
     This is the Caspian meta-schema
     """
@@ -96,14 +116,14 @@ class CaspianSchema(BaseModel):
             '$schema': 'https://json-schema.org/draft/2019-09/schema'
         }
     dataset: DataSetData
-    model: Union[Tabular, Relational, Graph, Nested]
+    model: Union[Tabular, Graph, Nested]
 
 
 def field_dict():
     # Utility function to return a dict of sub-fields of a DataField
     fdict = {}
     subfields = []
-    dfields = DataField.__fields__
+    dfields = DataColumn.__fields__
     # print('dfields ', dfields)
     for fieldgroup in dfields:
         field = dfields[fieldgroup]
@@ -116,14 +136,14 @@ def field_dict():
 
 def write_metaschema(fnam):
     # Write the metaschema as JSON
-    jsonout = CaspianSchema.schema_json(indent=2)
+    jsonout = MetadataDefinition.schema_json(indent=2)
     print('schema = ', jsonout)
     with open(fnam, 'w') as f:
         f.write(jsonout)
 
 if __name__ == '__main__':
     write_metaschema('schemas/caspian_metaschema.json')
-    schema_obj = CaspianSchema.schema()
+    schema_obj = MetadataDefinition.schema()
     # print(schema_obj)
     res = jsonschema.Draft201909Validator(schema_obj)
     print(res)
@@ -149,6 +169,25 @@ if __name__ == '__main__':
 
 
 
+# Simple schema generation test
+
+#fieldname1 = FieldNames(rawname='tpep_pickup_datetime')
+#fieldtype1 = FieldTypes(ftype='int64')
+#datafield1 = DataField(names=fieldname1, types=fieldtype1)
+
+#fieldname2 = FieldNames(rawname='tpep_pickup_datetime')
+#fieldtype2 = FieldTypes(ftype='double')
+#datafield2 = DataField(names=fieldname2, types=fieldtype2)
+
+#tabular = Tabular(fields=[datafield1, datafield2])
+#model = CaspianSchema(model=tabular)
+
+#print('printing schema')
+#print(model.schema_json(indent=2))  # This prints the whole meta-schema
+
+#print(model.dict())  # This prints a dict of just the definied schema
+
+#print(model.json(indent=2))  # This prints just the defined model schema as JSON
 
 
 

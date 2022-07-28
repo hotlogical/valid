@@ -2,7 +2,7 @@ import datetime
 import shutil
 import json
 import pyarrow.parquet as pq
-from datatools import load_dataset_schema, get_datasets, get_hash, get_dataset_dirs
+from datatools import load_dataset_metadata, get_datasets, get_hash, get_dataset_dirs
 from validation import Validation
 from UID import UID
 
@@ -11,7 +11,7 @@ class Ingestion(object):
 
     def __init__(self, dataset_name):
         self.dataset_name = dataset_name
-        self.schema = load_dataset_schema(self.dataset_name)
+        self.schema = load_dataset_metadata(self.dataset_name)
         ds_info = get_datasets()
         self.dirs = get_dataset_dirs(dataset_name)
         self.ds_data = ds_info.datasets[dataset_name]
@@ -20,7 +20,7 @@ class Ingestion(object):
 
     def copy_raw_data(self, ingestion):
         pq_filename = self.ds_data.pattern.replace('{x}', ingestion) + '.parquet'
-        fields = self.schema.model.fields
+        fields = self.schema.model.columns
         schema_cols = [fields[i].names.raw_name for i in range(len(fields))]
         pt = pq.read_table(self.dirs['raw_dir'] + pq_filename, schema_cols)
         self.working_file = self.dirs['dataset_dir'] + pq_filename

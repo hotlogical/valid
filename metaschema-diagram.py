@@ -1,8 +1,8 @@
 import erdantic as erd
-from generate_metaschema import CaspianSchema
+from metadata_definition import MetadataDefinition
 
 # Easy one-liner
-erd.draw(CaspianSchema, out="diagram.png")
+erd.draw(MetadataDefinition, out="diagram.png")
 
 ## Or create a diagram object that you can inspect and do stuff with
 #diagram = erd.create(Party)

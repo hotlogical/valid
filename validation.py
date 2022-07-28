@@ -1,6 +1,6 @@
 import json
 import pyarrow.parquet as pq
-from datatools import load_dataset_schema, get_datasets, get_row_data
+from datatools import load_dataset_metadata, get_datasets, get_row_data
 from constraints_arrow import check_constraint
 
 getclass Validation(object):
@@ -31,7 +31,7 @@ getclass Validation(object):
             data_table = pq.read_table(self.pq_filename, columns=[column_name])
             data_table_column = data_table.column(0)
             column_checks[column_name] = self.validate_column(i, data_table_column.combine_chunks(),
-                                                    pq_metadata['fields'][column_name], self.schema.model.fields[i])
+                                                              pq_metadata['fields'][column_name], self.schema.model.columns[i])
             table_level = max(table_level, column_checks[column_name]['column_level'])
         table['table_level'] = table_level
         return table_level
@@ -45,8 +45,8 @@ getclass Validation(object):
         column_check = {}
         column_level = 0
         # Validate type
-        if schema.types.pq_type != metadata.dtype:
-            column_check['parquet_type'] = {'schema_type': schema.types.pq_type, 'parquet_type': metadata.dtype}
+        if schema.types.parquet_type != metadata.dtype:
+            column_check['parquet_type'] = {'schema_type': schema.types.parquet_type, 'parquet_type': metadata.dtype}
             column_level = 2
         if schema.types.logical_type != metadata.logical.lower():
             column_check['logical_type'] = {'schema_type': schema.types.logical_type,
@@ -93,7 +93,7 @@ getclass Validation(object):
         table['num_data_cols'] = num_data_cols
         table['data_cols'] = data_cols
         # Get columns from schema
-        schema_fields = self.schema.model.fields
+        schema_fields = self.schema.model.columns
         schema_cols = [schema_fields[i].names.raw_name for i in range(len(schema_fields))]
         num_schema_cols = len(schema_cols)
         table['num_schema_cols'] = num_schema_cols
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     ds_data = get_datasets().datasets[dataset_name]
     work_path = f'data/{dataset_name}/raw/'
     pq_filename = work_path + ds_data.pattern.replace('{x}', ingestion) + '.parquet'
-    schema = load_dataset_schema(dataset_name)
+    schema = load_dataset_metadata(dataset_name)
     vd = Validation(dataset_name, schema)
     valid = vd.validate(pq_filename)
     with open(f'data/{dataset_name}/valid.json', 'w') as fh:

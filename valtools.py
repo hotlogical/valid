@@ -131,7 +131,7 @@ def make_column_row(col_name, checks, cols, schema):
                         status = col_map[check.column_level]
                         colbox('.', status, status)
                     case'dtype':
-                        typ = schema.types.pq_type
+                        typ = schema.types.parquet_type
                         st.text(typ)
                         # st.selectbox('', dtypes, dtypes.index(typ))
                     case 'logical':
@@ -161,7 +161,7 @@ def make_columns(valid, schema):
     make_columns_header(cols)
     checks = valid.table.column_checks
     for i, col_name in enumerate(checks):
-        make_column_row(col_name, checks, cols, schema.model.fields[i])
+        make_column_row(col_name, checks, cols, schema.model.columns[i])
     st.markdown('---')
 
 
