@@ -4,6 +4,7 @@ import streamlit as st
 import pyarrow.dataset as ds
 from datatools import load_data, get_datasets, get_row_data, get_metadata, get_file_info, get_n_rows_to_df, parquet_from_yaml, get_table_file, dataroot
 from destools import make_fields, dtypcol, colbox, coldict, make_table
+from deepdiff import DeepDiff
 
 # Must be first command executed
 st.set_page_config(page_title="Asset description tool", page_icon="🔑", layout="wide")
@@ -20,7 +21,7 @@ datasets = list(ds_data.datasets.keys())
 if 'old_dataset_name' not in st.session_state:
     st.session_state.old_dataset_name = ''
 with ccols[0]:  # dataset chooser dropdown
-    dataset = datasets[-1]
+    dataset = datasets[0]
     dataset_name = st.selectbox('Choose dataset', datasets, datasets.index(dataset))
     ds_info = ds_data.datasets[dataset_name]
     if dataset_name != st.session_state.old_dataset_name:  # Reset if change dataset
@@ -117,10 +118,30 @@ colbox('Schema', 'Green')
 st.write("![ready](https://img.shields.io/static/v1?label=Status&message=Complete&color=005500)")
 # scj = generate_schema(parquet_file)
 if metadata is not None:
-    st.write(metadata.dict())
+    dict_raw=metadata.dict()
+    st.write(dict_raw)
     metadata_file = dataroot / dataset_name / 'metadata' / f'{dataset_name}.metadata.json'
     with metadata_file.open('w') as fh:
         fh.write(metadata.json(indent=2, exclude_unset=True))
+    # check dict -> json -> file -> json -> dict
+    import metadata_definition as md
+    with metadata_file.open('r') as fh:  # Load the metadata
+        test_metadata = json.load(fh)
+        test_metadata = md.MetadataDefinition(**test_metadata)
+        dict_jsonfile = test_metadata.dict()
+        ddiff = DeepDiff(dict_raw, dict_jsonfile, ignore_order=True)
+        st.write(f'metadata.dict() with metadata ➝ json ➝ file ➝ json ➝ metadata.dict()',  ddiff)
+    # Write yaml
+    metadata_file_yaml = metadata_file.with_suffix('.yaml')
+    with metadata_file_yaml.open('w') as fh:
+        fh.write(metadata.yaml(exclude_unset=True))
+    with metadata_file_yaml.open('r') as fh:  # Load the metadata
+        test_metadata_yaml = '\n'.join(fh.readlines())
+        test_metadata_yaml = md.MetadataDefinition.parse_raw(test_metadata_yaml)
+        dict_yamlfile = test_metadata_yaml.dict()
+        ddiff = DeepDiff(dict_raw, dict_yamlfile, ignore_order=True)
+        st.write(f'metadata.dict() with metadata ➝ yaml ➝ file ➝ yaml ➝ metadata.dict()',  ddiff)
+
     # validate schema
     # metaschema = json.load(open('schemas/caspian_metaschema.json'))
     # res = None

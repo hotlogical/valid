@@ -11,7 +11,7 @@ import pyarrow.parquet as pq
 import pyarrow.csv as pa_csv
 from dotmap import DotMap
 import metadata_definition as md
-import metadata_tools as stls
+import minimal_metadata as stls
 import jsonschema
 import streamlit as st
 from arrow_types import arrow_types
@@ -80,7 +80,7 @@ def load_data(dataset_name, dataurl, columns=None):
 
 
 def read_parquet(pq_filename, columns=None):
-    pt = pq.read_table(pq_filename, columns)
+    pt = pq.read_table(pq_filename, columns=columns)
     return pt
 
 def get_n_rows_to_df(pq_filename, num_rows=10):
@@ -186,20 +186,26 @@ def parquet_from_metadata(table_metadata):
 
 def get_metadata(dataset_name, ds_info):
     dataset_dir = dataroot / dataset_name
-    metadata_path = dataset_dir / 'metadata' / f'{dataset_name}.metadata.json'
-    if not metadata_path.exists():  # Generate minimal metadata if no metadata exists yet
+    metadata_path_json = dataset_dir / 'metadata' / f'{dataset_name}.metadata.json'
+    metadata_path_yaml = dataset_dir / 'metadata' / f'{dataset_name}.metadata.yaml'
+    if (not metadata_path_json.exists()) and (not metadata_path_yaml.exists()):  # Generate minimal metadata if no metadata exists yet
         metadata = stls.minimal_metadata(dataset_name, ds_info)
-        with metadata_path.open('w') as f:
-            f.write(metadata.json(indent=2, exclude_unset=True))
+        with metadata_path_json.open('w') as fh:
+            fh.write(metadata.json(indent=2, exclude_unset=True))
+        with metadata_path_yaml.open('w') as fh:
+            fh.write(metadata.yaml(exclude_unset=True))
     return load_dataset_metadata(dataset_name)
 
 
 def load_dataset_metadata(dataset_name):
     dataset_dir = dataroot / dataset_name
     metadata_path = dataset_dir / 'metadata' / f'{dataset_name}.metadata.json'
+    metadata_path = dataset_dir / 'metadata' / f'{dataset_name}.metadata.yaml'
     with metadata_path.open('r') as fh:  # Load the metadata
-        metadata = json.load(fh)
-        metadata = md.MetadataDefinition(**metadata)
+        # metadata = json.load(fh)
+        # metadata = md.MetadataDefinition(**metadata)
+        yml = '\n'.join(fh.readlines())
+        metadata = md.MetadataDefinition.parse_raw(yml)
     return metadata
 
 

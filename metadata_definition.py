@@ -1,6 +1,7 @@
 from typing import List, Dict, Optional, Union, Any, Callable
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 # import json
+from pydantic_yaml import YamlModel
 import jsonschema
 
 # Generate Caspian Meta-Schema
@@ -107,7 +108,7 @@ class Graph(BaseModel):
 class Nested(BaseModel):
     name: str
 
-class MetadataDefinition(BaseModel):
+class MetadataDefinition(YamlModel):
     """
     This is the Caspian meta-schema
     """
@@ -134,12 +135,23 @@ def field_dict():
         fdict[fieldgroup] = subfields
     return fdict
 
+
+class RequestDataValidation(BaseModel):
+    pq_filepath: str = Field(..., example='spark/yellow_taxi/yellow_taxi.2021-07.parquet')
+    metadata_filepath: str = Field(..., example='spark/yellow_taxi/yellow_taxi.metadata.json')
+
 def write_metaschema(fnam):
     # Write the metaschema as JSON
     jsonout = MetadataDefinition.schema_json(indent=2)
     print('schema = ', jsonout)
     with open(fnam, 'w') as f:
         f.write(jsonout)
+    yamlout = MetadataDefinition.yaml()
+    print('schema = ', yamlout)
+    fnam2 = fnam.replace('json', 'yaml')
+    with open(fnam, 'w') as f:
+        f.write(yamlout)
+
 
 if __name__ == '__main__':
     write_metaschema('schemas/caspian_metaschema.json')

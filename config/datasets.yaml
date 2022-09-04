@@ -78,15 +78,14 @@ datasets:
     dataset_type: Tabular
     tables:
       intuizi:
-        url: https://us-east-1.console.aws.amazon.com/s3/buckets/intuizi-external/test_{x}.csv
-        pattern: test_{x}.csv
+        url: https://us-east-1.console.aws.amazon.com/s3/buckets/intuizi-external/intuizi.{x}.csv
+        pattern: intuizi.{x}.csv
         file_type: csv
         update: append
-        default_ingestion: test5
+        default_ingestion: May.09e71
         ingestions:
-          - test3
-          - test4
-          - test5
+          - May.09e71
+          - May.ec655
   techselerator:
     dataset_type: Tabular
     tables:
