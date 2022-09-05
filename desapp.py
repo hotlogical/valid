@@ -2,8 +2,8 @@ import json
 import jsonschema
 import streamlit as st
 import pyarrow.dataset as ds
-from datatools import load_data, get_datasets, get_row_data, get_metadata, get_file_info, get_n_rows_to_df, parquet_from_yaml, get_table_file, dataroot
-from destools import make_fields, dtypcol, colbox, coldict, make_table
+from datatools import get_datasets, get_row_data, get_metadata, get_file_info, parquet_from_yaml, get_table_file, dataroot
+from destools import make_fields, dtypcol, colbox, coldict
 from deepdiff import DeepDiff
 
 # Must be first command executed
