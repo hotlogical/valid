@@ -34,7 +34,8 @@ tables = ds_info.tables
 table_list = list(tables.keys())
 with ccols[2]:
     st.write('.')
-    coldict({'Name': metadata.dataset.name, 'DataType': metadata.dataset.datatype, 'UID': metadata.dataset.uid})
+    # coldict({'Name': metadata.dataset.name, 'DataType': metadata.dataset.datatype, 'UID': metadata.dataset.uid})
+    coldict({'Name': dataset_name, 'DataType': 'Tabular', 'UID': ''})
 
 
 #default_table = tables[0]
@@ -61,10 +62,11 @@ with ccols[2]:
 
 # Dataset and Table tabs
 st.write('<style>div.row-widget.stRadio > div{flex-direction:row;} </style> ', unsafe_allow_html=True)
-tab = st.radio('', ['Dataset Info ___', 'Tables'])
+# tab = st.radio('', ['Dataset Info ___', 'Tables'])
+tab1, tab2 = st.tabs(['Dataset Info', 'Tables'])
 
-
-if tab == 'Dataset Info ___':  # Show examples of tables and table relations
+# if tab == 'Dataset Info ___':  # Show examples of tables and table relations
+with tab1:
     for table in tables:
         table_file = get_table_file(dataset_name, table, ds_info.tables[table])
         dataset = ds.dataset(table_file, format="parquet")
@@ -81,13 +83,14 @@ if tab == 'Dataset Info ___':  # Show examples of tables and table relations
 #    # Make table constraints and transforms section
 #    # make_table(row_data['fields'], pt)
 
-if tab == 'Tables':
+# if tab == 'Tables':
+with tab2:
     ccols = st.columns((2, 2, 1, 8))
     with ccols[0]:  # table chooser dropdown
         table = table_list[0]
         table_name = st.selectbox('Choose table', tables, table_list.index(table))
         table_info = tables[table_name]
-    with ccols[1]:  # Table chooser dropdown
+    with ccols[1]:  # ingestion chooser dropdown
         ingestion_default = table_info.default_ingestion
         ingestions = table_info.ingestions
         ingestion = st.selectbox('Choose ingestion', ingestions, ingestions.index(ingestion_default))
@@ -97,14 +100,14 @@ if tab == 'Tables':
     file_info = get_file_info(dataset_name, table_name, dataurl, columns=selcols)
     with ccols[3]:
         fi = file_info
-        mdi = metadata.model.tables[table].table_info
+        # mdi = metadata.model.tables[table].table_info
         # Get raw metadata from the parquet file
         row_data = get_row_data(file_info.parquet, file_info.columns)
         coldict({'Name': table_name, 'UpdateType': table_info['update'], 'NumRowGroups': row_data['num_row_groups'],
-                 'UID': mdi.uid})
+                 'UID': ''})
         coldict({f'{fi.pq_num_rows:,}': 'rows', fi.pq_num_cols: 'columns', 'On disk': f'{fi.csv_size:.1f} MB (raw)',
                  f'{fi.parquet_size:.1f}': 'MB (parquet)', f'{fi.mem_size:.1f}': 'MB (arrow)'}, 'Grey', 'Grey')
-
+    st.markdown('---')
     # Get raw metadata from the parquet file
     row_data = get_row_data(file_info.parquet, file_info.columns)
     # Make the stats and schema sections for each field

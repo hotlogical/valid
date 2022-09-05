@@ -60,7 +60,6 @@ def get_file_info(dataset_name, table_name, dataurl, columns=None):
     file_info.get_parquet_size()
     return file_info
 
-
 # @st.experimental_memo
 def load_data(dataset_name, dataurl, columns=None):
     # Load a dataset - as an arrow table from parquet
@@ -76,8 +75,6 @@ def load_data(dataset_name, dataurl, columns=None):
     # df = pd.read_parquet(fpq, columns=columns)
     pt = pq.read_table(pq_filename, columns)
     return pt, pq_filename, csv_filename
-
-
 
 def read_parquet(pq_filename, columns=None):
     pt = pq.read_table(pq_filename, columns=columns)
@@ -179,10 +176,8 @@ def get_table_file(dataset_name, table, table_info):
     table_parquet = table_csv.with_suffix('.parquet')
     return table_parquet
 
-
 def parquet_from_metadata(table_metadata):
     pass
-
 
 def get_metadata(dataset_name, ds_info):
     dataset_dir = dataroot / dataset_name
@@ -204,7 +199,7 @@ def load_dataset_metadata(dataset_name):
     with metadata_path.open('r') as fh:  # Load the metadata
         # metadata = json.load(fh)
         # metadata = md.MetadataDefinition(**metadata)
-        yml = '\n'.join(fh.readlines())
+        yml = fh.read()
         metadata = md.MetadataDefinition.parse_raw(yml)
     return metadata
 

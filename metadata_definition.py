@@ -8,7 +8,6 @@ import jsonschema
 
 class ColumnNames(BaseModel):
     # Names section of DataField
-    uid: str
     raw_name: str
     display_name: Optional[str]
     description_short: Optional[str]
@@ -17,22 +16,12 @@ class ColumnNames(BaseModel):
 class ColumnTypes(BaseModel):
     # Types section of DataField
     parquet_type: str
-    logical_type: Optional[str]
-    arrow_type: Optional[str]
-    representation: Optional[str]
+    logical_type: str
+    caspian_type: str
     units: Optional[str]
 
 class ColumnFlags(BaseModel):
     # Flags section of DataField
-    is_raw: Optional[bool]
-    is_pii: Optional[bool]
-    is_standardised: Optional[bool]
-    is_transformed: Optional[bool]
-    is_inherited: Optional[bool]
-    is_join: Optional[bool]
-    is_key: Optional[bool]
-    is_synthetic: Optional[bool]
-    is_backfilled: Optional[bool]
     is_categorical: Optional[bool]
     is_numeric: Optional[bool]
 
@@ -47,16 +36,12 @@ class ColumnTransforms(BaseModel):
     transforms: Optional[List[Transforms]]
 
 class Constraint(BaseModel):
-    # Constraints section of DataField
+    # Constraints section of DataColumn
     name: str
     values: Dict[str, Any]
     enabled: bool
 
-class Status(BaseModel):
-    status: str
-
 class DataColumn(BaseModel):
-    status: Optional[Status]
     names: ColumnNames
     types: ColumnTypes
     flags: Optional[ColumnFlags]
@@ -73,40 +58,22 @@ class DecodeInfo(BaseModel):
     timestamp_parsers: Optional[List[str]]
     safe: str = True
 
-class TableInfo(BaseModel):
-    # Table metadata
-    name: str
-    uid: str
-    decodeinfo: Optional[DecodeInfo]
-
-class DataSetData(BaseModel):
-    name: str
-    datatype: str
-    uid: str
-
-class DataTable(BaseModel):
-    status: Optional[Status]
-    table_info: Optional[TableInfo]
-    columns: List[DataColumn]
-    table_constraints: Optional[List[Constraint]]
-
 class TableColumn(BaseModel):
     table: str
     column: str
 
-class TableRelations(BaseModel):
+class TableRelation(BaseModel):
     values: Dict[TableColumn, TableColumn]
 
-class Tabular(BaseModel):
-    status: Optional[Status]
-    tables: Dict[str, DataTable]
-    relations: Optional[List[TableRelations]]
+class DataTable(BaseModel):
+    columns: List[DataColumn]
+    table_constraints: Optional[List[Constraint]]
+    relations: Optional[List[TableRelation]]
+    decodeinfo: Optional[DecodeInfo]
 
-class Graph(BaseModel):
-    name: str
-
-class Nested(BaseModel):
-    name: str
+class File(BaseModel):  # A class representing any file that is not a table (or part of a table)
+    # dummy: Optional[str]
+    pass
 
 class MetadataDefinition(YamlModel):
     """
@@ -116,8 +83,7 @@ class MetadataDefinition(YamlModel):
         schema_extra = {
             '$schema': 'https://json-schema.org/draft/2019-09/schema'
         }
-    dataset: DataSetData
-    model: Union[Tabular, Graph, Nested]
+    directory: Dict[str, Union[DataTable, File]]  # Logical structure of the Artifacts in a dataset
 
 
 def field_dict():
@@ -154,6 +120,9 @@ def write_metaschema(fnam):
 
 
 if __name__ == '__main__':
+    import erdantic as erd
+    erd.draw(MetadataDefinition, out='Artifact.png')
+    exit(0)
     write_metaschema('schemas/caspian_metaschema.json')
     schema_obj = MetadataDefinition.schema()
     # print(schema_obj)

@@ -163,7 +163,7 @@ def make_field_stats(i, field_data, pt, metadata, table_name):
         make_time_stats(field_data, fa)  # Special for datetimes
         return
     vc = pc.value_counts(fa)
-    mdmt = metadata.model.tables[table_name]
+    mdmt = metadata.directory[table_name]
     cat = mdmt.columns[i].flags.is_categorical
     numeric = mdmt.columns[i].flags.is_numeric
     if cat is None and len(vc) < 30:
@@ -179,7 +179,7 @@ def make_field_stats(i, field_data, pt, metadata, table_name):
 def make_names_section(i, section, fdict, parquet_file, metadata, table_name):
     fields = fdict[section]
     # oldvalues = readcolmetadata(pt, i, section)
-    mdmt = metadata.model.tables[table_name]
+    mdmt = metadata.directory[table_name]
     oldvalues = getattr(mdmt.columns[i], section).dict()
     response = {}
     with st.form(f"form_{section}"):
@@ -216,7 +216,7 @@ def make_names_types_flags_form(i, parquet_file, metadata, table_name):
 def make_constraints_form(n, field_data, parquet_file, metadata, table_name):
     field = field_data['field_name']
     # clist = 'greater_equal less_equal'.split()
-    mdmt = metadata.model.tables[table_name]
+    mdmt = metadata.directory[table_name]
     clist = type_constraints(mdmt.columns[n].types.parquet_type, all_constraints)
     cols = 'constraint 2 warning 2 error 2 enabled 1 delete 1 . 1'.split()
     cols = {cols[i]: float(cols[i + 1]) for i in range(0, len(cols), 2)}
@@ -289,18 +289,25 @@ def make_field_content(i, field_data, parquet_file, metadata, table_name):
     pt = read_parquet(parquet_file, [field_data['field_name']])
     st.write('<style>div.row-widget.stRadio > div{flex-direction:row;} </style>',
              unsafe_allow_html=True)
-    tab = st.radio('', ['Distribution', 'Statistics .', 'Names Types Flags  .', 'Constraints .',
-                        'Transforms / Standardizations'])
-    if tab == 'Distribution':  # Show graph of data and some stats
+#     tab = st.radio('', ['Distribution', 'Statistics .', 'Names Types Flags  .', 'Constraints .',
+#                         'Transforms / Standardizations'])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(['Distribution', 'Statistics', 'Names Types Flags',
+                                            'Constraints', 'Transforms / Standardizations'])
+#     if tab == 'Distribution':  # Show graph of data and some stats
+    with tab1:
         make_field_stats(i, field_data, pt, metadata, table_name)
-    if tab == 'Statistics .':  # Further stats
+#     if tab == 'Statistics .':  # Further stats
+    with tab2:
         df = pt.column(0).to_pandas().describe(include='all')
         st.write(df)
-    if tab == 'Names Types Flags  .':  # Form to enter schema details
+#     if tab == 'Names Types Flags  .':  # Form to enter schema details
+    with tab3:
         metadata = make_names_types_flags_form(i, parquet_file, metadata, table_name)
-    if tab == 'Constraints .':  # Form to enter constraint details
+#     if tab == 'Constraints .':  # Form to enter constraint details
+    with tab4:
         metadata = make_constraints_form(i, field_data, parquet_file, metadata, table_name)
-    if tab == 'Transforms Standardizations':
+#     if tab == 'Transforms Standardizations':
+    with tab5:
         pass
     st.markdown('---')
     return metadata

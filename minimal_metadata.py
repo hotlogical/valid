@@ -10,10 +10,7 @@ dataroot = Path.home() / 'data'
 
 def empty_table(dataset_name):
     # First dataset part
-    dataset = md.DataSetData(name=dataset_name, datatype='Tabular', uid=UID().str)
-    tabledata = md.TableInfo(name=dataset_name, uid=UID().str)
-    tabular = md.DataTable(tabledata=tabledata)
-    model = md.MetadataDefinition(dataset=dataset, model=tabular)
+    model = md.MetadataDefinition(directory={})
     schema = model
     return schema
 
@@ -28,20 +25,18 @@ def minimal_constraints(stats, is_numeric=False):
 
 
 def minimal_column(column, raw_name):
-    field_names = md.ColumnNames(uid=UID().str, raw_name=raw_name, display_name=raw_name)
+    field_names = md.ColumnNames(raw_name=raw_name, display_name=raw_name)
     parquet_type = column.physical_type.lower()
     if not column.is_stats_set:
         raise ImportError
     stats = column.statistics
     # print(sts.logical_type)
     logical_type = stats.logical_type.type.lower() if stats.logical_type.type != '' else parquet_type
-    status = md.Status(status='raw')
-    field_types = md.ColumnTypes(parquet_type=parquet_type, logical_type=logical_type, arrow_type=parquet_type,
-                                 representation=parquet_type)
+    field_types = md.ColumnTypes(parquet_type=parquet_type, logical_type=logical_type, caspian_type=logical_type)
     is_numeric = parquet_type in numeric
-    field_flags = md.ColumnFlags(is_raw=True, is_numeric=is_numeric)
+    field_flags = md.ColumnFlags(is_numeric=is_numeric)
     constraints = minimal_constraints(stats, is_numeric)
-    return md.DataColumn(status=status, names=field_names, types=field_types, flags=field_flags, constraints=constraints)
+    return md.DataColumn(names=field_names, types=field_types, flags=field_flags, constraints=constraints)
 
 
 def minimal_columns(pq_metadata, select_columns=None):
@@ -84,19 +79,16 @@ def get_decode_info(table, table_info):
 
 
 def make_field_schema(status=None, names=None, types=None, flags=None, constraints=None):
-    schema = md.DataColumn(status=status, names=names, types=types, flags=flags, constraints=constraints)
+    schema = md.DataColumn(names=names, types=types, flags=flags, constraints=constraints)
     return schema
 
 def minimal_metadata(dataset_name, ds_info):
     dataset_dir = dataroot / dataset_name
 
-    dataset_data = md.DataSetData(name=dataset_name, datatype='Tabular', uid=UID().str)
-    tables = {}
+    directory = {}
     for table in ds_info.tables:
         table_info = ds_info.tables[table]
-        status = md.Status(status='raw')
         decodeinfo = md.DecodeInfo(**get_decode_info(table, table_info))
-        table_data = md.TableInfo(name=table, uid=UID().str, decodeinfo=decodeinfo)
         table_dir = dataset_dir / 'raw' / table
         dataurl = table_info.url.replace('{x}', str(table_info.default_ingestion))
         table_csv = table_dir / dataurl.split('/')[-1]
@@ -104,9 +96,11 @@ def minimal_metadata(dataset_name, ds_info):
         pq_metadata = pq.read_metadata(parquet_file)
         inc_cols = table_info.get('include_columns', None)
         columns = minimal_columns(pq_metadata, inc_cols)
-        tables[table] = md.DataTable(status=status, table_info=table_data, columns=columns)
-    tabular = md.Tabular(status=status, tables=tables)
-    return md.MetadataDefinition(dataset=dataset_data, model=tabular)
+        datatable = md.DataTable(columns=columns, decodeinfo=decodeinfo)
+        directory[table] = datatable
+    directory['shit'] = md.File()
+    metadata = md.MetadataDefinition(directory=directory)
+    return metadata
 
 
 
