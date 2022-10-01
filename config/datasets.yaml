@@ -82,10 +82,11 @@ datasets:
         pattern: intuizi.{x}.csv
         file_type: csv
         update: append
-        default_ingestion: May.09e71
+        default_ingestion: 1
         ingestions:
-          - May.09e71
-          - May.ec655
+          - 1
+#          - May.09e71
+#          - May.ec655
   techselerator:
     dataset_type: Tabular
     tables:
@@ -133,3 +134,17 @@ datasets:
           - 2022.04
           - 2022.05
           - 2022.06
+  travel_ticketing:
+    dataset_type: Tabular
+    tables:
+      travel_ticketing:
+        url: https://somwebsite.or.other/some/path/travel_ticketing.{x}.csv
+        pattern: travel_ticketing.{x}.csv
+        file_type: csv
+        update: update
+        column_types:
+          flightnumber: string
+        safe: False
+        default_ingestion: "202206"
+        ingestions:
+          - "202206"

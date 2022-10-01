@@ -15,6 +15,7 @@ import minimal_metadata as stls
 import jsonschema
 import streamlit as st
 from arrow_types import arrow_types
+from dataset_stats import DataSetInfo, DataSetField
 
 dataroot = Path.home() / 'data'
 
@@ -31,7 +32,10 @@ class FileInfo:
     columns: Optional[List] = field(default_factory=lambda: None)
     types: Optional[Dict] = field(default_factory=lambda: None)
     def get_csv_size(self):
-        self.csv_size = os.path.getsize(self.csv) / 1000000
+        if os.path.exists(self.csv):
+            self.csv_size = os.path.getsize(self.csv) / 1000000
+        else:
+            self.csv_size = 0
     def get_parquet_size(self):
         self.parquet_size = os.path.getsize(self.parquet) / 1000000
     def get_mem_size(self):
@@ -242,53 +246,6 @@ def get_hash(file_path):
             i += 1
     return sha256_hash.hexdigest()
 
-
-def make_default_schema():
-    pass
-
-
-def load_schema():
-    pass
-
-
-def save_schema():
-    pass
-
-
-def get_row_data(parquet_file, selcols, dotmap=False):
-    # Collect data available from the parquet file metadata and schema
-    md = pq.read_metadata(parquet_file)
-    sc = pq.read_schema(parquet_file)
-    rd = {'num_columns': md.num_columns, 'num_rows': md.num_rows, 'num_row_groups': md.num_row_groups}
-#    if rd['num_row_groups'] != 1:
-#        raise ImportError
-    rg = md.row_group(0)
-    rd['fields'] = {}
-    for i in range(md.num_columns):
-        col = rg.column(i)
-        fnam = col.path_in_schema
-        if selcols is not None:
-            if fnam not in selcols:
-                continue
-        field = {}
-        field['field_name'] = fnam
-        field['dtype'] = col.physical_type.lower()
-        if not col.is_stats_set:
-            raise ImportError
-        stats = col.statistics
-        field['min'] = stats.min
-        field['max'] = stats.max
-        field['nulls'] = '' if stats.null_count == 0 else stats.null_count
-        field['logical'] = stats.logical_type.type
-        field['arrowtype'] = sc.field(i).type
-        field['distinct'] = ''
-        field['value_counts'] = ''
-        rd['fields'][fnam] = field
-    if dotmap:
-        rd = DotMap(rd)
-    return rd
-
-
 def setcolmetadata(pt, n, section, mdict, parquet_file=None):
     # Set arrow/parquet metadata for a particular column
     st = pt.metadata
@@ -312,7 +269,6 @@ def setcolmetadata(pt, n, section, mdict, parquet_file=None):
         pq.write_table(pt, parquet_file)
     return pt
 
-
 def readcolmetadata(pt, n, section=None):
     # Get the column metadata from arrow/parquet schema
     md = pt.metadata.field(n).metadata
@@ -329,7 +285,6 @@ def readcolmetadata(pt, n, section=None):
         return {}  # No metadata for the section we requested
     return metad[section]  # Send back the section metadata
 
-
 def readcolmetadata2(parquet_file, n, section=None):
     # Get the column metadata from arrow/parquet schema
     md = pq.read_schema(parquet_file).field(n).metadata
@@ -345,7 +300,6 @@ def readcolmetadata2(parquet_file, n, section=None):
     if section not in metad:
         return {}  # No metadata for the section we requested
     return metad[section]  # Send back the section metadata
-
 
 def generate_schema(parquet_file):
     # Combine the column meta and add the table metadata
@@ -367,7 +321,6 @@ def generate_schema(parquet_file):
     jsonschema.validate(schema, metaschema)
     return schema
 
-
 def get_validation_data(dataset_name):
     # Load dir contents
     dirs = get_dataset_dirs(dataset_name)
@@ -383,6 +336,55 @@ def get_validation_data(dataset_name):
         validations[val_data['ingestion']] = val_data
     return validations
     # Fill structure of validation data
+
+def get_dataset_info(dataset: pa.dataset.Dataset, column_filter: List[str] = None) -> DataSetInfo:
+    # Collect data available from the parquet file metadata and schema
+    data_set_info = DataSetInfo()
+
+    for fragment in list(dataset.get_fragments()):
+        num_columns = fragment.metadata.num_columns
+        num_rows = fragment.metadata.num_rows
+        num_row_groups = fragment.metadata.num_row_groups
+
+        # TODO: maybe we need an assertion test?
+        data_set_info.num_columns = max(data_set_info.num_columns, num_columns)
+        data_set_info.num_rows += num_rows
+
+        # TODO: is this the right way to aggregate?
+        data_set_info.num_row_groups = num_row_groups
+
+        for row_group in range(num_row_groups):
+            for col in range(num_columns):
+                column = fragment.metadata.row_group(row_group).column(col)
+                fnam = column.path_in_schema
+                if column_filter is not None:
+                    if fnam not in column_filter:
+                        continue
+                if not column.is_stats_set:
+                    raise ImportError
+                stats = column.statistics
+
+                field = DataSetField(
+                    field_name=fnam,
+                    dtype=column.physical_type.lower(),
+                    min=stats.min,
+                    max=stats.max,
+                    nulls=stats.null_count,
+                    logical=stats.logical_type.type,
+                    arrowtype=dataset.schema.field(col).type,
+                    distinct="",
+                    value_counts=""
+                )
+
+                if field.field_name not in data_set_info.fields:
+                    data_set_info.fields[field.field_name] = field
+                else:
+                    prev_field = data_set_info.fields[field.field_name]
+                    prev_field.min = min(prev_field.min, field.min)
+                    prev_field.max = max(prev_field.max, field.max)
+                    prev_field.nulls += field.nulls
+    return data_set_info
+
 
 if __name__ == '__main__':
     #pt = read_csv('data/custom_weather/test_locations.csv', 'poo', delimiter='|',

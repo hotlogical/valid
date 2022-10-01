@@ -1,6 +1,7 @@
 import uuid
 
 alpha = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+alpha = '1234567890_abcdefghijklmnopqrstuvwxyz'
 alphabet = list(reversed(sorted(set(alpha))))
 lenalpha = len(alphabet)
 
